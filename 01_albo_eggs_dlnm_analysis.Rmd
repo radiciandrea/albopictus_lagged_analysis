@@ -1,27 +1,43 @@
 ---
-title: "Time series analysis of Aedes albopictus eggs"
+title: "Time Series Analysis of *Aedes albopictus* Eggs"
 author: "Daniele Da Re, Andrea Radici"
-date: '2023-07-14'
-output: html_document
+date: "2023-07-14"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    number_sections: false
+    theme: readable
 ---
 
 ```{r setup, include=FALSE}
-
-knitr::opts_chunk$set(echo = TRUE)
+require("knitr")
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
+opts_knit$set(root.dir = "/home/dared/GitHub/albopictus_lagged_analysis/")
 ```
 
-The main goal of this study is to investigate
-- the effect of lagged temperature and precipitation (alone and combined) on egg abundance dynamic using the VectAbundance dataset
-- to use the Distr. Lag Non Linear mod_Tel, calibrated on the whole VectAbundance series and locations, to (1) validate on independent locations (France) and (2) predict egg dynamic in the weeks where data are missing and hence get estimate the begging and end of the ovipositing season
-- Simulate oviposition dynamic under climate change projections
+## 0. Introduction
+
+This report presents a time series analysis of *Aedes albopictus* egg abundance using the **VectAbundance dataset** ([Da Re et al., 2024](https://doi.org/10.1038/s41597-024-03482-y)). The study focuses on understanding the influence of climatic variables on egg dynamics, model validation, and climate change projections.
+
+The specific objectives of this study are:
 
 
-## 1. Load packages and observations - preprocessing
-```{r, message=FALSE}
+* **Climatic Drivers**: Investigate the effect of lagged temperature and precipitation—individually and in combination—on egg abundance dynamics.
 
-data_folder <- "C:/Users/2024ar003/Desktop/Alcuni file permanenti/Post_doc/Dati/DaRe/"
+* **Model Validation and Prediction**: Apply a Distributed Lag Non-Linear Model (DLNM), calibrated on the complete VectAbundance dataset across all locations, to:
 
-setwd(data_folder)
+* **Predict egg abundance during missing weeks**, allowing estimation of the start and end of the oviposition season.
+
+* **Validate predictions on independent locations**: Montpellier (France) dataset (still to do).
+
+* **Climate Change Simulation (optional)**: Simulate future oviposition dynamics under climate change projections.
+
+## 1. Preprocessing
+
+Load packages and observations. 
+
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(lubridate)
 library(skimr)
@@ -33,51 +49,46 @@ library(mgcv)
 library(gnm) 
 library(pbs) 
 library(terra)
-#VectAbundance + ERA5
-#BioMatrix
+library(sf)
+library(mapview)
 
-bio.matrix <- readRDS(paste0(data_folder, "VectAbundance015_ER5.RDS"))
-  
-# bio.matrix_sel <- bio.matrix %>% 
-#   select(ID, Country, Region, year, lat,  week, first_date, value, 
-#          med_TAVG, medianPhotoweek, sum_PREC) %>% 
-#   rename(eggs=value, medianTweek= med_TAVG, cumPrecweek=sum_PREC, date=first_date) %>% 
-#   mutate(month=month(date), 
-#          eggs=floor(eggs)) %>% 
-#   as_tibble()
-
-bio.matrix_sel <- bio.matrix %>% 
-  select(ID, Country, Region, year, latitude,  week, date, value, 
+bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>% 
+  select(ID, Country, Region, year, latitude, longitude, week, date, value, 
          tas, tp) %>% 
-  rename(eggs=value, medianTweek= tas, cumPrecweek=tp, lat = latitude) %>% 
+  rename(eggs=value, medianTweek= tas, cumPrecweek=tp, long= longitude, lat = latitude) %>% 
   mutate(month=month(date), 
          eggs=floor(eggs)) %>% 
   as_tibble()
-
+bio.matrix_sel
 ```
 
-
-
-Keep only Emilia-Romagna region, remove 1 ID location which will be used afterwards for validation
+A map was created to illustrate the geographical distribution of the sampling locations.
 
 ```{r}
-
-#region excluded from calibration
+bio.matrix_sel %>% 
+  select(long, lat) %>% 
+  distinct() %>% 
+  st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
+  mapview()
+```
+One location ID was excluded from the initial analysis to be used later for model validation.
+```{r}
 ID_val = "6776"
 
 mydf <- bio.matrix_sel %>% 
-  # filter((Region %in% c("Emilia-Romagna"))) %>%
-  filter(ID != ID_val) 
-  # drop_na()
+   filter(ID != ID_val) 
 
-# remove data from march, april, november
-mydf$eggs[mydf$week %in% 10:18] = NA
-mydf$eggs[mydf$week %in% 41:45] = NA
-
+# plot validation plot location
+bio.matrix_sel %>% 
+  filter(ID == ID_val) %>%  
+  select(long, lat) %>% 
+  distinct() %>% 
+  st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
+  mapview()
 ```
 
+Exploratory plots were generated to visualize the response variable (egg abundance) across the different regions.
 
-Exploratory plots: response variable
 ```{r}
 plot(eggs~date,  data=mydf, cex=0.05 ,  xlab="Date", ylab="Number of eggs", bty="l")
 summary(mydf$eggs)
@@ -86,18 +97,9 @@ hist(mydf$eggs, main = "Histogram of Number of eggs")
 hist(log10(mydf$eggs + 1 ), main = "Histogram of log10(Number of eggs +1)")
 par(mfrow=c(1,1))
 ```
-We apply log10 transformation to brutally account for the negative binomial distribution
-
-```{r}
-mydf$eggsL10<- log10(mydf$eggs+1)
-```
-
-Latitudinal variation
-```{r}
-plot(unique(mydf$lat), ylim=c(40,50), xaxt='n', xlab="", ylab="Latitude",  lty=1, bty="n")
-```
 
 Inspect an individual time series ID_subset
+
 ```{r}
 ID_subset = "9347"
 
@@ -115,28 +117,43 @@ layout(1)
 par(mar=c(5,4,4,1)+0.1)
 ```
 
-## 2. Define spline transformation to capture the seasonal trends (so far, we're not using them)
+We apply log10 transformation to **brutally** account for the negative binomial distribution
+```{r}
+mydf$eggsL10<- log10(mydf$eggs+1)
+```
+
+Investigate the latitudinal variation
+```{r}
+plot(unique(mydf$lat), ylim=c(40,50), xaxt='n', xlab="", ylab="Latitude",  lty=1, bty="n")
+```
+
+## 2. Trend and Seasonality
+
+Define spline transformation to capture the seasonal trends.
 ```{r}
 # long interannual temporal trend
 dftrend <- round(as.numeric(diff(range(mydf$date))/365.25 * length(unique(mydf$year)))) 
 btrend <- ns(mydf$date, knots=equalknots(mydf$date, dftrend-1))
 # seasonal intraannual trend
-bseas <- ns(mydf$month, df=4) #week
+mydf$week <- as.numeric(mydf$week)
+mydf$year <- as.factor(mydf$year)
+bseas <- ns(mydf$week, df=4) 
 ```
 
 Define the stratum as a grouping factor (so far, we're not using it)
 ```{r}
-mydf$stratum <- with(mydf, factor(Region))
+mydf$stratum <- with(mydf, year)
 ```
 
 ## 3. Univariate models
 
 ### 3.1 Temperature
-Define the crossbasis for the temperature, applying a spline on the temperature dimension and another one on the temporal one (lags).
 
-We use a bspline for temperature with knots defined by the lower and upper quartile.
+To model the delayed and potentially non-linear effect of temperature on egg abundance, we define a crossbasis using a Distributed Lag Non-Linear Model (DLNM) framework.
 
-For the lags, we define a lag of maximum 8 weeks, with knots set on the 1st and 4th week. 
+A B-spline is applied to the temperature dimension, with knots positioned at the lower and upper quartiles of the temperature distribution. This allows flexible modeling of the non-linear relationship between temperature and the response.
+
+For the lag dimension, we consider effects up to 8 weeks. A spline is also used here, with knots placed at the 1st and 4th week, capturing both short- and medium-term lagged associations.
 
 ```{r}
 tknots<-unname(quantile(mydf$medianTweek, probs = c(0.25, 0.75), na.rm = TRUE))
@@ -146,31 +163,29 @@ cbTemp <- crossbasis(mydf$medianTweek, lag=8,
                      argvar=list(fun="bs", degree=2, knots=tknots),
                      arglag=list(knots=c(1,4)),
                      group=mydf$Region)
-# cbTemp <- crossbasis(mydf$medianTweek, lag=8,
-#                    argvar=list(knots=c(5, 20)),
-#                    arglag=list(knots=c(2, 5)))
 ```
    
-We now run the mod_Tel formalised as:
-- one mod_Tel to understand the effect of the exposure of the reponse variable (mod_T_T)
-- one mod_Tel to use the mod_Tel to predict, in which the crossbasis is passed to as a dataframe(mod_T_T_pred)
+We now run the model suite, consisting of the following univariate configurations:
+
+* **mod_T**: A univariate model including only temperature as the predictor, used to assess the direct effect of temperature on the response variable.
+
+* **mod_T.seas**: A univariate model including both temperature and a seasonal component, to evaluate the temperature effect while accounting for underlying seasonal trends.
+
+* **mod_T_pred**: A predictive univariate model including temperature, in which the crossbasis is pre-computed and passed as a separate data frame. This facilitates predictions on new data or for missing time points.
 
 ```{r}
-
 # Fit mod_Tel to analyse coefficients
 mod_T <- gnm(eggsL10 ~ cbTemp,
-           #eliminate=stratum, #grouping factor
+           eliminate=stratum, #grouping factor
            data=mydf,
            family=gaussian(),
            na.action= "na.exclude")
 
-mod_T.seas <- gnm(eggsL10 ~ cbTemp+ bseas, # + btrend,
-           #eliminate=stratum, #grouping factor
+mod_T.seas <- gnm(eggsL10 ~ cbTemp+ bseas*year, # + btrend,
+           eliminate=stratum, #grouping factor
            data=mydf,
            family=gaussian(),
            na.action= "na.exclude")
-
-AIC(mod_T, mod_T.seas)
 
 # define predictive model
 cbTemp_df <- as.data.frame(cbTemp)
@@ -186,9 +201,6 @@ mod_T_pred <- gnm(form,
                 data = mydf_ext,
                 family = gaussian(),
                 na.action = "na.exclude")
-
-# btrend_df <- as.data.frame(btrend)
-# colnames(btrend_df) <- paste0("bt", seq_len(ncol(btrend_df)))
 bseas_df <- as.data.frame(bseas)
 colnames(bseas_df) <- paste0("bt", seq_len(ncol(bseas_df)))
 mydf_ext.seas <- cbind(mydf, cbTemp_df, bseas_df) #btrend
@@ -201,9 +213,16 @@ mod_T.seas_pred <- gnm(form,
                 family = gaussian(),
                 na.action = "na.exclude")
 ```
+Inspect the AIC for the univariate model with temperature and the model with temperature and seasonality
 
-#### 3.1.1 response curves
-Predict
+```{r}
+AIC(mod_T, mod_T.seas)
+```
+
+#### 3.1.1 Response curves
+
+Investigate the response curves on temperature.
+
 ```{r}
 #centering point at 10°C
 myCen <- 10
@@ -216,13 +235,17 @@ plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)
 plot(cptmean.seas, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)", col=2,
      main="Temperature + Seasonality: overall cumulative exposure-response")
 ```
+
+Temperature and lags together
+
 ```{r}
 # Contour map 2D
 plot(cptmean, "contour", xlab="Temperature (°C)", ylab="Lag", 
      main="Temperature: overall cumulative exposure-response")
 plot(cptmean.seas, "contour", xlab="Temperature (°C)", ylab="Lag", 
-     main="Temperature: overall cumulative exposure-response")
+     main="Temperature + seasonality: overall cumulative exposure-response")
 ```
+
 ```{r}
 # 3D surface
 plot(cptmean, xlab="Temperature (°C)", zlab="Increment (Log10)", 
@@ -230,9 +253,11 @@ plot(cptmean, xlab="Temperature (°C)", zlab="Increment (Log10)",
      main="Temperature: exposure-lag-response", col=2)
 plot(cptmean.seas, xlab="Temperature (°C)", zlab="Increment (Log10)", 
      ltheta=240, lphi=60, cex.axis=0.8, 
-     main="Temperature +seas : exposure-lag-response", col=2)
+     main="Temperature + seas : exposure-lag-response", col=2)
 ```
-Plot the effect at different lags
+
+Plot the effect at different lags (univariate model only)
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cptmean, var=5, xlab="Lag", ylab="Increment (Log10)", col=2, 
@@ -249,7 +274,8 @@ plot(cptmean, var=40, xlab="Lag", ylab="Increment (Log10)", col=2,
 layout(1)
 ```
 
-Plot the effect at different T
+Plot the effect at different Temperatures (univariate model only)
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cptmean, lag=0, xlab="T", ylab="Increment (Log10)", col=2, 
@@ -265,8 +291,9 @@ plot(cptmean, lag=8, xlab="T", ylab="Increment (Log10)", col=2,
      main="lag=8")
 layout(1)
 ```
-#### 3.1.2 Plot fitted
-plot fitted (I can use either mod_T or mod_T_pred)
+#### 3.1.2 Plot fitted values
+
+Plot values predicted on one random location selected from the calibration dataset.
 
 ```{r}
 mydf$fitted <- 10^(fitted(mod_T_pred))-1 
@@ -287,12 +314,16 @@ legend("topright", legend=c("Observed", "Fitted T + Seas"), col=c("blue", "darkg
 text(x=mydf_temp$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_temp$eggs, mydf_temp$fitted.seas)$estimate,3)))
 
 ```
-#### 3.1.3 validation plot on excluded ID
-predict on new values. Only on ID_val (previously defined and excluded)
+
+#### 3.1.3 Validation plot
+
+Plot values predicted on the location that was previously excluded from the model calibration.
 
 ```{r}
 mydf_val <- bio.matrix_sel %>% 
-  filter(ID == ID_val)
+  filter(ID == ID_val) %>% 
+  mutate(week=as.integer(week), 
+         year=as.factor(year))
 
 regions <- unique(mydf$Region)
 
@@ -308,50 +339,48 @@ cbTemp_val <- crossbasis(newdf$medianTweek, lag=8,
 
 cbTemp_val_df <- as.data.frame(cbTemp_val)
 colnames(cbTemp_val_df) <- paste0("cb", seq_len(ncol(cbTemp_val_df)))
-
 newdf_ext <- cbind(newdf, cbTemp_val_df)
 
-# Predict ()
+# Predict
 log10eggsPred <- predict(mod_T_pred, newdata = newdf_ext, type = "response")
 mydf_val$eggsPred  = 10^(log10eggsPred)-1
 
+#plot
 plot(mydf_val$date, mydf_val$eggs, col = "blue")
-lines(newdf$date, mydf_val$eggsPred , col = "darkgreen")
+lines(newdf$date, mydf_val$eggsPred , col = "darkgreen", lty=2)
 # plot(newdf$date, predY, col = "darkgreen")
 legend("topright", legend=c("observed eggs", "predicted eggs"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_val$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_val$eggs, mydf_val$eggsPred)$estimate,3)))
+```
 
-# predict (model with both T and seas)
+Predict also using the model with both Temperature and seasonality.
 
+```{r}
 # long interannual temporal trend
-
 btrend <- ns(mydf_val$date, knots=equalknots(mydf_val$date, dftrend-1))
 # seasonal intraannual trend
-bseas_pred <- ns(mydf_val$month, df=4) #week
+bseas_pred <- ns(mydf_val$week, df=4) #week
 
 bseas_pred_df <- as.data.frame(bseas_pred)
 colnames(bseas_pred_df) <- paste0("bt", seq_len(ncol(bseas_pred_df)))
 
 mydf_ext.seas <- cbind(newdf, cbTemp_val_df, bseas_pred_df)
 
-# Predict ()
+# Predict
 log10eggsPred <- predict(mod_T.seas_pred, newdata = mydf_ext.seas, type = "response")
 mydf_val$eggsPred_seas  = 10^(log10eggsPred)-1
 
-
+# plot
 plot(mydf_val$date, mydf_val$eggs, type="p" ,col="blue", ylab="Y", main= "Temperature + seas model")
 lines(mydf_val$date, mydf_val$eggsPred_seas , col="darkgreen", lty=2)
 legend("topright", legend=c("Observed", "Fitted T + Seas"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_val$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_val$eggs, mydf_val$eggsPred_seas )$estimate,3)))
-
-
 ```
-#### 3.1.4 Risk factors
 
+#### 3.1.4 Risk factors
 
 ```{r}
 #Estimation at different T and lags
-
 t.risk.v <- as.character(5*(0:(40/5)))
 
 t.risk.df = data.frame(temp = t.risk.v,
@@ -383,31 +412,30 @@ t.risk.df
 
 ### 3.2. Precipitation
 
-Define the crossbasis for the Precipitation, applying a spline on the Precipitation dimension and another one on the temporal one (lags).
+To assess the delayed and non-linear effects of weekly cumulative precipitation on egg abundance, we define a crossbasis function using the Distributed Lag Non-Linear Model (DLNM) approach.
 
-We use a bspline for Precipitation with knots defined by the lower and upper quartile.
+* For the exposure dimension (cumPrecweek), we apply a B-spline of degree 2 with knots placed at the 50th (median) and 90th percentiles of the precipitation distribution. This allows the model to flexibly capture non-linear relationships between precipitation and the response variable.
 
-For the lags, we define a lag of maximum 8 weeks, with knots set on the 1st and 4th week. 
+* For the lag dimension, we consider a maximum lag of 8 weeks, with internal knots at weeks 1 and 4. This structure captures both short-term and delayed effects. 
 
 ```{r}
 pknots<-unname(quantile(mydf$cumPrecweek, probs = c(0.5, 0.90), na.rm = TRUE))
 #original
-
 cbPrec <- crossbasis(mydf$cumPrecweek, lag=8,
                      argvar=list(fun="bs", degree=2, knots=pknots),
                      arglag=list(knots=c(1,4)),
                      group=mydf$Region)
-# cbPrec <- crossbasis(mydf$cumPrecweek, lag=8,
-#                    argvar=list(knots=c(5, 20)),
-#                    arglag=list(knots=c(2, 5)))
 ```
 
-We now run the mod_P formalised as:
-  - one mod_P to understand the effect of the exposure of the reponse variable (mod_P)
-- one mod_P to use the mod_P to predict, in which the crossbasis is passed to as a dataframe(mod_P_pred)
+We now run a series of univariate models to investigate the effect of precipitation on egg abundance. The model suite includes the following configurations:
+
+* **mod_P**: A univariate model including only precipitation as the predictor, used to evaluate the direct effect of precipitation on the response variable.
+
+* **mod_P.seas**: A univariate model including both precipitation and a seasonal component, allowing us to assess the precipitation effect while adjusting for seasonal patterns.
+
+* **mod_P_pred**: A predictive univariate model including precipitation, where the crossbasis is pre-computed and passed as a separate data frame. This setup supports forecasting or imputing values in weeks with missing data.
 
 ```{r}
-
 # Fit mod_Pel to analyse coefficients
 mod_P <- gnm(eggsL10 ~ cbPrec,
              #eliminate=stratum, #grouping factor
@@ -420,8 +448,6 @@ mod_P.seas <- gnm(eggsL10 ~ cbPrec+ bseas, # + btrend,
                   data=mydf,
                   family=gaussian(),
                   na.action= "na.exclude")
-
-AIC(mod_P, mod_P.seas)
 
 # define predictive model
 cbPrec_df <- as.data.frame(cbPrec)
@@ -438,8 +464,6 @@ mod_P_pred <- gnm(form,
                   family = gaussian(),
                   na.action = "na.exclude")
 
-# btrend_df <- as.data.frame(btrend)
-# colnames(btrend_df) <- paste0("bt", seq_len(ncol(btrend_df)))
 bseas_df <- as.data.frame(bseas)
 colnames(bseas_df) <- paste0("bt", seq_len(ncol(bseas_df)))
 mydf_ext.seas <- cbind(mydf, cbPrec_df, bseas_df) #btrend
@@ -453,8 +477,14 @@ mod_P.seas_pred <- gnm(form,
                        na.action = "na.exclude")
 ```
 
-#### 3.2.1 response curves
-Predict
+Inspect the AIC for the univariate model with precipitation and the model with precipitation and seasonality
+
+```{r}
+AIC(mod_P, mod_P.seas)
+```
+
+#### 3.2.1 Response curves
+
 ```{r}
 #centering point at 25 mm
 myCen <- 25
@@ -473,8 +503,9 @@ plot(cppcum.seas, ptype="overall", xlab="Precipitation (mm)", ylab="Increment (L
 plot(cppcum, "contour", xlab="Precipitation (mm)", ylab="Lag", 
      main="Precipitation: overall cumulative exposure-response")
 plot(cppcum.seas, "contour", xlab="Precipitation (mm)", ylab="Lag", 
-     main="Precipitation: overall cumulative exposure-response")
+     main="Precipitation + seas: overall cumulative exposure-response")
 ```
+
 ```{r}
 # 3D surface
 plot(cppcum, xlab="Precipitation (mm)", zlab="Increment (Log10)", 
@@ -482,9 +513,11 @@ plot(cppcum, xlab="Precipitation (mm)", zlab="Increment (Log10)",
      main="Precipitation: exposure-lag-response", col=2)
 plot(cppcum.seas, xlab="Precipitation (mm)", zlab="Increment (Log10)", 
      ltheta=240, lphi=60, cex.axis=0.8, 
-     main="Precipitation +seas : exposure-lag-response", col=2)
+     main="Precipitation + seas : exposure-lag-response", col=2)
 ```
+
 Plot the effect at different lags
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cppcum, var=0, xlab="Lag", ylab="Increment (Log10)", col=2, 
@@ -501,7 +534,8 @@ plot(cppcum, var=100, xlab="Lag", ylab="Increment (Log10)", col=2,
 layout(1)
 ```
 
-Plot the effect at different P
+Plot the effect at different precipitation values
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cppcum, lag=0, xlab="P", ylab="Increment (Log10)", col=2, 
@@ -517,8 +551,10 @@ plot(cppcum, lag=8, xlab="P", ylab="Increment (Log10)", col=2,
      main="lag=8")
 layout(1)
 ```
-#### 3.2.2 Plot fitted
-plot fitted (I can use either mod_P or mod_P_pred)
+
+#### 3.2.2 Plot fitted values
+
+Plot values predicted on one random location selected from the calibration dataset.
 
 ```{r}
 mydf$fitted <- 10^(fitted(mod_P_pred))-1 
@@ -539,8 +575,10 @@ legend("topright", legend=c("Observed", "Fitted T + Seas"), col=c("blue", "darkg
 text(x=mydf_temp$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_temp$eggs, mydf_temp$fitted.seas)$estimate,3)))
 
 ```
-#### 3.2.3 validation plot on excluded ID
-predict on new values. Only on ID_val (previously defined and excluded)
+
+#### 3.2.3 Validation plot
+
+Plot values predicted on the location that was previously excluded from the model calibration.
 
 ```{r}
 mydf_val <- bio.matrix_sel %>% 
@@ -560,10 +598,9 @@ cbPrec_val <- crossbasis(newdf$cumPrecweek, lag=8,
 
 cbPrec_val_df <- as.data.frame(cbPrec_val)
 colnames(cbPrec_val_df) <- paste0("cb", seq_len(ncol(cbPrec_val_df)))
-
 newdf_ext <- cbind(newdf, cbPrec_val_df)
 
-# Predict ()
+# Predict
 log10eggsPred <- predict(mod_P_pred, newdata = newdf_ext, type = "response")
 mydf_val$eggsPred  = 10^(log10eggsPred)-1
 
@@ -573,10 +610,12 @@ lines(newdf$date, mydf_val$eggsPred , col = "darkgreen")
 legend("topright", legend=c("observed eggs", "predicted eggs"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_val$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_val$eggs, mydf_val$eggsPred)$estimate,3)))
 
-# predict (model with both T and seas)
+```
 
+Predict also using the model with both Temperature and seasonality.
+
+```{r}
 # long interannual temporal trend
-
 btrend <- ns(mydf_val$date, knots=equalknots(mydf_val$date, dftrend-1))
 # seasonal intraannual trend
 bseas_pred <- ns(mydf_val$month, df=4) #week
@@ -590,22 +629,17 @@ mydf_ext.seas <- cbind(newdf, cbPrec_val_df, bseas_pred_df)
 log10eggsPred <- predict(mod_P.seas_pred, newdata = mydf_ext.seas, type = "response")
 mydf_val$eggsPred_seas  = 10^(log10eggsPred)-1
 
-
+#plot
 plot(mydf_val$date, mydf_val$eggs, type="p" ,col="blue", ylab="Y", main= "Precipitation + seas model")
 lines(mydf_val$date, mydf_val$eggsPred_seas , col="darkgreen", lty=2)
 legend("topright", legend=c("Observed", "Fitted T + Seas"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_val$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_val$eggs, mydf_val$eggsPred_seas )$estimate,3)))
-
-
 ```
 
-#### 4.1.4 Risk factors
-
+#### 3.2.4 Risk factors
 ```{r}
 #Estimation at different T and lags
-
 p.risk.v <- as.character(c(0, 10, 20, 40, 60, 90, 120))
-
 p.risk.df = data.frame(prec = p.risk.v,
                        allfit = NA,
                        alllow = NA,
@@ -616,18 +650,19 @@ for (p.risk in p.risk.v){
   p.risk.df[which(p.risk== p.risk.v),2:4] = 
     round(with(cppcum.seas, cbind(allfit, alllow, allhigh)[p.risk,]), 2)
 }
-
 p.risk.df 
-
-
 ```
+## 4. Mutivariate model
 
-## 4. Mutivariate mod_TP
-Let's now run the multivariate mod_Tel 
+To jointly assess the effects of temperature and precipitation on egg abundance, we implement a set of multivariate models using crossbasis functions for both predictors.
 
-We now run the mod_TP
+* **mod_TP**: A multivariate model including both temperature (cbTemp) and precipitation (cbPrec) as predictors. This model evaluates the combined and independent effects of the two climatic variables on the response variable (eggsL10).
+
+* **mod_TP.seas**: An extended version of the multivariate model that also includes a seasonal component (bseas). This allows us to disentangle the climatic effects from seasonal patterns in egg abundance.
+
+* **mod_TP_pred**: A predictive multivariate model, where the crossbasis is pre-computed and passed as a separate data frame. This setup supports forecasting or imputing values in weeks with missing data.
+
 ```{r}
-
 # Fit mod_Tel to analyse coefficients
 mod_TP <- gnm(eggsL10 ~  cbTemp + cbPrec,
            #eliminate=stratum, #grouping factor
@@ -635,13 +670,11 @@ mod_TP <- gnm(eggsL10 ~  cbTemp + cbPrec,
            family=gaussian(),
            na.action= "na.exclude")
 
-mod_TP.seas <- gnm(eggsL10 ~ cbTemp + cbPrec + bseas, # + btrend,
+mod_TP.seas <- gnm(eggsL10 ~ cbTemp + cbPrec + bseas*year, # + btrend,
            #eliminate=stratum, #grouping factor
            data=mydf,
            family=gaussian(),
            na.action= "na.exclude")
-
-AIC(mod_TP, mod_TP.seas)
 
 # define predictive model
 cbTemp_df <- as.data.frame(cbTemp)
@@ -661,8 +694,6 @@ mod_TP_pred <- gnm(form,
                 family = gaussian(),
                 na.action = "na.exclude")
 
-# btrend_df <- as.data.frame(btrend)
-# colnames(btrend_df) <- paste0("bt", seq_len(ncol(btrend_df)))
 bseas_df <- as.data.frame(bseas)
 colnames(bseas_df) <- paste0("bt", seq_len(ncol(bseas_df)))
 mydf_ext.seas <- cbind(mydf, cbTempPrec_df, bseas_df) #btrend
@@ -676,8 +707,15 @@ mod_TP.seas_pred <- gnm(form,
                 na.action = "na.exclude")
 ```
 
+Investigate the AIC on all the model produced so far: 
+
+```{r}
+data.frame( models = c("Temperature", "Temperature + seasonality", "Precipitation",  "Precipitation + seasonality", "Temperature + Precipitation", "Temperature + Precipitation + seasonality"),
+            AIC =AIC(mod_T, mod_T.seas, mod_P, mod_P.seas, mod_TP, mod_TP.seas) )
+```
+
 ### 4.1 response curves: temperatures
-Predict
+
 ```{r}
 #centering point at 10°C
 myCen <- 10
@@ -690,6 +728,7 @@ plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)
 plot(cptmean.seas, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)", col=2,
      main="Temperature + Seasonality: overall cumulative exposure-response")
 ```
+
 ```{r}
 # Contour map 2D
 plot(cptmean, "contour", xlab="Temperature (°C)", ylab="Lag", 
@@ -697,6 +736,7 @@ plot(cptmean, "contour", xlab="Temperature (°C)", ylab="Lag",
 plot(cptmean.seas, "contour", xlab="Temperature (°C)", ylab="Lag", 
      main="Temperature + seasonality: overall cumulative exposure-response")
 ```
+
 ```{r}
 # 3D surface
 plot(cptmean, xlab="Temperature (°C)", zlab="Increment (Log10)", 
@@ -706,7 +746,9 @@ plot(cptmean.seas, xlab="Temperature (°C)", zlab="Increment (Log10)",
      ltheta=240, lphi=60, cex.axis=0.8, 
      main="Temperature +seas : exposure-lag-response", col=2)
 ```
+
 Plot the effect at different lags
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cptmean, var=5, xlab="Lag", ylab="Increment (Log10)", col=2, 
@@ -723,7 +765,8 @@ plot(cptmean, var=40, xlab="Lag", ylab="Increment (Log10)", col=2,
 layout(1)
 ```
 
-Plot the effect at different T
+Plot the effect at different Temperatures 
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cptmean, lag=0, xlab="T", ylab="Increment (Log10)", col=2, 
@@ -740,7 +783,6 @@ plot(cptmean, lag=8, xlab="T", ylab="Increment (Log10)", col=2,
 layout(1)
 ```
 ### 4.2 response curves: precipitation
-Predict
 ```{r}
 #centering point at 25 mm
 myCen <- 25
@@ -759,8 +801,9 @@ plot(cppcum.seas, ptype="overall", xlab="Precipitation (mm)", ylab="Increment (L
 plot(cppcum, "contour", xlab="Precipitation (mm)", ylab="Lag", 
      main="Precipitation: overall cumulative exposure-response")
 plot(cppcum.seas, "contour", xlab="Precipitation (mm)", ylab="Lag", 
-     main="Precipitation: overall cumulative exposure-response")
+     main="Precipitation + seas: overall cumulative exposure-response")
 ```
+
 ```{r}
 # 3D surface
 plot(cppcum, xlab="Precipitation (mm)", zlab="Increment (Log10)", 
@@ -768,9 +811,11 @@ plot(cppcum, xlab="Precipitation (mm)", zlab="Increment (Log10)",
      main="Precipitation: exposure-lag-response", col=2)
 plot(cppcum.seas, xlab="Precipitation (mm)", zlab="Increment (Log10)", 
      ltheta=240, lphi=60, cex.axis=0.8, 
-     main="Precipitation +seas : exposure-lag-response", col=2)
+     main="Precipitation + seas : exposure-lag-response", col=2)
 ```
+
 Plot the effect at different lags
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cppcum, var=0, xlab="Lag", ylab="Increment (Log10)", col=2, 
@@ -787,7 +832,8 @@ plot(cppcum, var=100, xlab="Lag", ylab="Increment (Log10)", col=2,
 layout(1)
 ```
 
-Plot the effect at different P
+Plot the effect at different precipitation values
+
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
 plot(cppcum, lag=0, xlab="P", ylab="Increment (Log10)", col=2, 
@@ -804,8 +850,9 @@ plot(cppcum, lag=8, xlab="P", ylab="Increment (Log10)", col=2,
 layout(1)
 ```
 
-### 4.3 Plot fitted
-plot fitted
+### 4.3 Plot fitted values
+
+Plot values predicted on one random location selected from the calibration dataset.
 
 ```{r}
 mydf$fitted <- 10^(fitted(mod_TP_pred))-1 
@@ -816,18 +863,19 @@ mydf_temp <- mydf %>%
 
 plot(mydf_temp$date, mydf_temp$eggs, type="p" ,col="blue", ylab="Y", main= "T + P only model")
 lines(mydf_temp$date, mydf_temp$fitted, col="darkgreen", lty=2)
-legend("topright", legend=c("Observed", "Fitted T"), col=c("blue", "darkgreen"), lty=c(1,2))
+legend("topright", legend=c("Observed", "Fitted T + P"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_temp$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_temp$eggs, mydf_temp$fitted)$estimate,3)))
-
 
 plot(mydf_temp$date, mydf_temp$eggs, type="p" ,col="blue", ylab="Y", main= "T + P + seas model")
 lines(mydf_temp$date, mydf_temp$fitted.seas, col="darkgreen", lty=2)
-legend("topright", legend=c("Observed", "Fitted T + Seas"), col=c("blue", "darkgreen"), lty=c(1,2))
+legend("topright", legend=c("Observed", "Fitted T + P + Seas"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_temp$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_temp$eggs, mydf_temp$fitted.seas)$estimate,3)))
 
 ```
-### 4.4 validation plot on excluded ID
-predict on new values. Only on ID_val (previously defined and excluded)
+
+### 4.4 Validation plot 
+
+Plot values predicted on the location that was previously excluded from the model calibration.
 
 ```{r}
 mydf_val <- bio.matrix_sel %>% 
@@ -860,46 +908,40 @@ colnames(cbPrec_val_df) <- paste0("cbP", seq_len(ncol(cbPrec_val_df)))
 cbTempPrec_val_df <- cbind(cbTemp_val_df, cbPrec_val_df)
 newdf_ext <- cbind(newdf, cbTempPrec_val_df)
 
-# Predict ()
+# Predict
 log10eggsPred <- predict(mod_TP_pred, newdata = newdf_ext, type = "response")
 mydf_val$eggsPred  = 10^(log10eggsPred)-1
 
 plot(mydf_val$date, mydf_val$eggs, col = "blue", main= " T + P")
-lines(newdf$date, mydf_val$eggsPred , col = "darkgreen")
-# plot(newdf$date, predY, col = "darkgreen")
+lines(newdf$date, mydf_val$eggsPred , col = "darkgreen", lty=2)
 legend("topright", legend=c("observed eggs", "predicted eggs"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_val$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_val$eggs, mydf_val$eggsPred)$estimate,5)))
+```
 
-# predict (model with both T and seas)
+Predict also using the model with both Temperature and seasonality.
 
+```{r}
 # long interannual temporal trend
-
 btrend <- ns(mydf_val$date, knots=equalknots(mydf_val$date, dftrend-1))
 # seasonal intraannual trend
 bseas_pred <- ns(mydf_val$month, df=4) #week
-
 bseas_pred_df <- as.data.frame(bseas_pred)
 colnames(bseas_pred_df) <- paste0("bt", seq_len(ncol(bseas_pred_df)))
-
 mydf_ext.seas <- cbind(newdf, cbTempPrec_val_df, bseas_pred_df)
 
-# Predict ()
+# Predict
 log10eggsPred <- predict(mod_TP.seas_pred, newdata = mydf_ext.seas, type = "response")
 mydf_val$eggsPred_seas  = 10^(log10eggsPred)-1
-
 
 plot(mydf_val$date, mydf_val$eggs, type="p" ,col="blue", ylab="Y", main= " T + P + seas model")
 lines(mydf_val$date, mydf_val$eggsPred_seas , col="darkgreen", lty=2)
 legend("topright", legend=c("Observed", "Fitted"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_val$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_val$eggs, mydf_val$eggsPred_seas )$estimate,5)))
-
-
 ```
-### 4.5 Risk factors
 
+### 4.5 Risk factors
 ```{r}
 #Estimation at different T and lags
-
 t.risk.v <- as.character(5*(0:(40/5)))
 
 t.risk.df = data.frame(temp = t.risk.v,
@@ -929,13 +971,18 @@ for (p.risk in p.risk.v){
 }
 
 p.risk.df 
-
 ```
+## 5 Predict egg laying seasonality
 
-## 5 Estimate seasonality
-we work only on the T + P+ seas model.
+In this step, we focus exclusively on the multivariate model including temperature, precipitation, and seasonality (mod_TP.seas) to estimate the seasonal pattern of egg-laying activity.
 
-we define the start of the season as the first week with eggs >1 and the end of season as the last week with eggs <1
+To define the start and end of the oviposition season, we adopt the following criteria based on model predictions:
+
+* **Start of the season**: the first week in which predicted egg abundance exceeds 5 egg.
+
+* **End of the season**: the last week in which predicted egg abundance remains above 5 egg.
+
+This threshold-based definition allows for a consistent and interpretable estimate of the egg-laying season across different regions and years, even in the presence of missing observational data.
 
 ```{r}
 pred.df <- data.frame(date=as.Date(mydf_ext.seas$date), 
@@ -947,7 +994,7 @@ pred.df$pred <- ifelse(pred.df$pred <1, 0,pred.df$pred )
 
 seas <- pred.df %>% 
   group_by(year) %>% 
-  filter(pred >0) %>%
+  filter(pred >5) %>%
   mutate(start = 1*(week==min(week)))%>%
   mutate(end = 1*(week==max(week))) %>%
   filter(start + end > 0) %>%
@@ -956,22 +1003,17 @@ seas <- pred.df %>%
 #get mean and mode
 seas %>% 
   filter(start==1) %>% 
-  reframe(m.start = mean(week), 
-          mod_Te.w = names(which(table(week) == max(table(week)))))
+  reframe(average.WeekStart = mean(week), 
+          mode_WeekStart = names(which(table(week) == max(table(week)))))
 ```
 
-### 5.1 Project seasonality in Europe
-beginning and end of the season defined by the 5 eggs threshold
+### 5.1 Predict egg laying seasonality in Europe (Extrapolation)
 
 ```{r}
-env.matrix <- readRDS(paste0(data_folder, "envMatrix_2008_2023.RDS"))
-
-env.matrix <- env.matrix  %>% 
+env.matrix <- readRDS("envMatrix_2008_2023.RDS") %>% 
   rename(medianTweek= tas, cumPrecweek=tp) %>% 
   filter(year > 2018) %>%
   as_tibble()
-
-# regions <- unique(env.matrix$Region)
 
 # Build newdf with same shape as original (if needed)
 newdf <- data.frame(date = env.matrix$date,
@@ -1027,11 +1069,10 @@ slength <- seas.av.df %>%
 plot(slength/4, main = "Average season length (months) over 2018-2023")
 ```
 
-
 ## 6. Mutivariate GLM mod_TP
-Let's now run the multivariate mod_Tel 
 
-We now run the mod_TP
+What if we avoid using the Log-transformed response variable and we go for a GLM?
+
 ```{r}
 
 # Fit mod_Tel to analyse coefficients
@@ -1082,8 +1123,8 @@ mod_TP.seas_pred <- gnm(form,
                 na.action = "na.exclude")
 ```
 
-### 4.1 response curves: temperatures
-Predict
+### 6.1 response curves: temperatures
+
 ```{r}
 #centering point at 10°C
 myCen <- 10
@@ -1112,6 +1153,7 @@ plot(cptmean.seas, xlab="Temperature (°C)", zlab="Increment (Log10)",
      ltheta=240, lphi=60, cex.axis=0.8, 
      main="Temperature +seas : exposure-lag-response", col=2)
 ```
+
 Plot the effect at different lags
 ```{r}
 layout(matrix(1:4, ncol=2, nrow = 2))
@@ -1145,7 +1187,8 @@ plot(cptmean, lag=8, xlab="T", ylab="Increment (Log10)", col=2,
      main="lag=8")
 layout(1)
 ```
-### 4.2 response curves: precipitation
+
+### 6.2 response curves: precipitation
 Predict
 ```{r}
 #centering point at 25 mm
@@ -1211,15 +1254,23 @@ layout(1)
 ```
 
 
+## 7. Discussion points
 
++ **Trasformazione dei dati di abbondanza (uova)**: I dati sulle abbondanze di uova mostrano una distribuzione presumibilmente poissoniana, probabilmente zero-inflated. Abbiamo applicato una trasformazione log10(x + 1) per ridurre l’asimmetria e contenere l’influenza dei valori estremi.
+ *→ Ha senso questa scelta metodologica in questo contesto? Oppure sarebbe preferibile un approccio basato direttamente su modelli zero-inflated o hurdle?*
 
++ **Variabilità tra stazioni e regioni**: Il dataset contiene molte stazioni distribuite su più regioni: questo da un lato arricchisce la base dati, ma introduce anche molto rumore.
+*→ L’utilizzo del parametro stratum nei modelli consente di tenere conto di questa variabilità spaziale? Può essere considerato equivalente a un "grouping factor" o un effetto casuale (random effect) come nei GLMM?*
 
-## TBD  to test
++ **Trend di lungo periodo e stagionalità**: Abbiamo incluso nel modello due spline naturali per rappresentare il trend di lungo periodo e la stagionalità.
+*→ Ha senso mantenerli? La scelta di includerli dovrebbe basarsi esclusivamente sull’AIC del modello?*
 
-Zero inflated mod_Tels \url{https://www.mycompiler.io/view/Bf879ujMKtH}
++ **Valutazione dell'effetto cumulato del lag**
+Appurato che non ha senso calcolare il relative risk per via della formulazione del modello (gaussiano su logaritmo), chi chiedevamo se fosse possibile valutare un effetto cumulato del lag sulla variabile di uscita, analogamente a come si fa per la temperatura
+*→ Al di là dell'effettiva possibilità, ha senso?*
 
-check interactions in dlnm in Day2_Session1_Demo_DLM.pdf 
-https://cran.r-project.org/web/packages/dlnm/vignettes/dlnmTS.pdf
++ [Zero inflated models](\url{https://www.mycompiler.io/view/Bf879ujMKtH}) 
 
- da discutere: 1) effetto regionale, 2 trend qnnuale 3 mappette stagionalite, 4 compute relative risk
++ check interactions in dlnm in Day2_Session1_Demo_DLM.pdf 
+
 
