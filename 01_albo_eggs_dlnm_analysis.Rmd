@@ -13,7 +13,13 @@ output:
 ```{r setup, include=FALSE}
 require("knitr")
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
+
+if (file.exists("C:/Users/2024ar003/Desktop/Alcuni file permanenti/Post_doc/Codice/local.R")){
+opts_knit$set(root.dir = "C:/Users/2024ar003/Desktop/Alcuni file permanenti/Post_doc/Codice/04_Trento/GitShared_AlboLaggedAnalysis/")
+} else {
 opts_knit$set(root.dir = "/home/dared/GitHub/albopictus_lagged_analysis/")
+}
+
 ```
 
 ## 0. Introduction
@@ -565,13 +571,13 @@ mydf_temp <- mydf %>%
 
 plot(mydf_temp$date, mydf_temp$eggs, type="p" ,col="blue", ylab="Y", main= "Precipitation only model")
 lines(mydf_temp$date, mydf_temp$fitted, col="darkgreen", lty=2)
-legend("topright", legend=c("Observed", "Fitted T"), col=c("blue", "darkgreen"), lty=c(1,2))
+legend("topright", legend=c("Observed", "Fitted P"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_temp$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_temp$eggs, mydf_temp$fitted)$estimate,3)))
 
 
 plot(mydf_temp$date, mydf_temp$eggs, type="p" ,col="blue", ylab="Y", main= "Precipitation + seas model")
 lines(mydf_temp$date, mydf_temp$fitted.seas, col="darkgreen", lty=2)
-legend("topright", legend=c("Observed", "Fitted T + Seas"), col=c("blue", "darkgreen"), lty=c(1,2))
+legend("topright", legend=c("Observed", "Fitted P + Seas"), col=c("blue", "darkgreen"), lty=c(1,2))
 text(x=mydf_temp$date[100],y=500, labels=paste("Pearson's r:", round(cor.test(mydf_temp$eggs, mydf_temp$fitted.seas)$estimate,3)))
 
 ```
