@@ -1,0 +1,30 @@
+---
+title: "02_albo_twoStages_analysis"
+author: "Daniele Da Re, Andrea Radici"
+date: "2025-09-03"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    number_sections: false
+    theme: readable
+---
+
+
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
+
+if (file.exists("C:/Users/2024ar003/Desktop/Alcuni file permanenti/Post_doc/Codice/local.R")){
+opts_knit$set(root.dir = "C:/Users/2024ar003/Desktop/Alcuni file permanenti/Post_doc/Codice/04_Trento/GitShared_AlboLaggedAnalysis/")
+} else {
+opts_knit$set(root.dir = "/home/dared/GitHub/albopictus_lagged_analysis/")
+}
+
+```
+
+## 0. Introduction
+
+This report presents a time series analysis of *Aedes albopictus* egg abundance using the **VectAbundance dataset** ([Da Re et al., 2024](https://doi.org/10.1038/s41597-024-03482-y)). The study focuses on understanding the influence of climatic variables on egg dynamics, model validation, and climate change projections.
+
+The specific objective of this study is to perform a two-stages analysis of the egg abundance temporal series to investigate the effect of lagged temperature and precipitation on egg-abundance analysis, first differentiating each regions and later pooling over the whole dataset.
