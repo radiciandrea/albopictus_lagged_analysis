@@ -1,5 +1,5 @@
 ---
-title: "02_albo_twoStages_analysis"
+title: "Two-stages time series analysis of *Aedes albopictus* oviposition"
 author: "Daniele Da Re, Andrea Radici"
 date: "2025-09-03"
 output: 
@@ -28,3 +28,154 @@ opts_knit$set(root.dir = "/home/dared/GitHub/albopictus_lagged_analysis/")
 This report presents a time series analysis of *Aedes albopictus* egg abundance using the **VectAbundance dataset** ([Da Re et al., 2024](https://doi.org/10.1038/s41597-024-03482-y)). The study focuses on understanding the influence of climatic variables on egg dynamics, model validation, and climate change projections.
 
 The specific objective of this study is to perform a two-stages analysis of the egg abundance temporal series to investigate the effect of lagged temperature and precipitation on egg-abundance analysis, first differentiating each regions and later pooling over the whole dataset.
+
+## 1. Preprocessing
+
+Load packages and observations. 
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+library(skimr)
+library(Epi) 
+library(dlnm) 
+library(tsModel)
+library(splines) 
+library(mgcv)
+library(gnm) 
+library(pbs) 
+library(terra)
+library(sf)
+library(mapview)
+
+bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>% 
+  select(ID, Country, Region, year, latitude, longitude, week, date, value, 
+         tas, tp) %>% 
+  rename(eggs=value, medianTweek= tas, cumPrecweek=tp, long= longitude, lat = latitude) %>% 
+  mutate(month=month(date), 
+         eggs=floor(eggs)) %>% 
+  as_tibble()
+```
+A map was created to illustrate the geographical distribution of the sampling locations.
+
+```{r}
+bio.matrix_sel %>% 
+  select(long, lat) %>% 
+  distinct() %>% 
+  st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
+  mapview()
+```
+One location ID was excluded from the initial analysis to be used later for model validation.
+```{r}
+ID_val = "6776"
+
+mydf <- bio.matrix_sel %>% 
+   filter(ID != ID_val) 
+
+# plot validation plot location
+bio.matrix_sel %>% 
+  filter(ID == ID_val) %>%  
+  select(long, lat) %>% 
+  distinct() %>% 
+  st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
+  mapview()
+```
+We apply log10 transformation to **brutally** account for the negative binomial distribution
+```{r}
+mydf$eggsL10<- log10(mydf$eggs+1)
+```
+
+## 2. Trend and Seasonality
+
+Define spline transformation to capture the seasonal trends.
+```{r}
+# long interannual temporal trend
+dftrend <- round(as.numeric(diff(range(mydf$date))/365.25 * length(unique(mydf$year)))) 
+btrend <- ns(mydf$date, knots=equalknots(mydf$date, dftrend-1))
+# seasonal intraannual trend
+mydf$week <- as.numeric(mydf$week)
+mydf$year <- as.factor(mydf$year)
+bseas <- ns(mydf$week, df=4) 
+```
+
+Define the stratum as a grouping factor (so far, we're not using it)
+```{r}
+mydf$stratum <- with(mydf, year)
+```
+
+## 3. Bivariate model
+
+To jointly assess the effects of temperature and precipitation on egg abundance, we implement a set of bivariate models using crossbasis functions for both predictors.
+
+* **mod_TP**: A multivariate model including both temperature (cbTemp) and precipitation (cbPrec) as predictors. This model evaluates the combined and independent effects of the two climatic variables on the response variable (eggsL10).
+
+* **mod_TP.seas**: An extended version of the multivariate model that also includes a seasonal component (bseas). This allows us to disentangle the climatic effects from seasonal patterns in egg abundance.
+
+* **mod_TP_pred**: A predictive multivariate model, where the crossbasis is pre-computed and passed as a separate data frame. This setup supports forecasting or imputing values in weeks with missing data.
+
+```{r}
+# Fit mod_Tel to analyse coefficients
+mod_TP <- gnm(eggsL10 ~  cbTemp + cbPrec,
+           #eliminate=stratum, #grouping factor
+           data=mydf,
+           family=gaussian(),
+           na.action= "na.exclude")
+
+mod_TP.seas <- gnm(eggsL10 ~ cbTemp + cbPrec + bseas*year, # + btrend,
+           #eliminate=stratum, #grouping factor
+           data=mydf,
+           family=gaussian(),
+           na.action= "na.exclude")
+
+# define predictive model
+cbTemp_df <- as.data.frame(cbTemp)
+cbPrec_df <- as.data.frame(cbPrec)
+colnames(cbTemp_df) <- paste0("cbT", seq_len(ncol(cbTemp_df)))
+colnames(cbPrec_df) <- paste0("cbP", seq_len(ncol(cbPrec_df)))
+
+cbTempPrec_df <- cbind(cbTemp_df, cbPrec_df)
+mydf_ext <- cbind(mydf, cbTempPrec_df)
+
+# Build formula with those columns
+form <- as.formula(paste("eggsL10 ~", paste(colnames(cbTempPrec_df), collapse = " + ")))
+
+# Fit mod_Tel to predict on new data
+mod_TP_pred <- gnm(form,
+                data = mydf_ext,
+                family = gaussian(),
+                na.action = "na.exclude")
+
+bseas_df <- as.data.frame(bseas)
+colnames(bseas_df) <- paste0("bt", seq_len(ncol(bseas_df)))
+mydf_ext.seas <- cbind(mydf, cbTempPrec_df, bseas_df) #btrend
+
+# Build formula with those columns
+form <- as.formula(paste("eggsL10 ~", paste(colnames( cbind(cbTempPrec_df ,  bseas_df)), collapse = " + "))) # btrend_df,
+
+mod_TP.seas_pred <- gnm(form,
+                data = mydf_ext.seas,
+                family = gaussian(),
+                na.action = "na.exclude")
+```
+
+Investigate the AIC on all the model produced so far: 
+
+```{r}
+data.frame( models = c("Temperature", "Temperature + seasonality", "Precipitation",  "Precipitation + seasonality", "Temperature + Precipitation", "Temperature + Precipitation + seasonality"),
+            AIC =AIC(mod_T, mod_T.seas, mod_P, mod_P.seas, mod_TP, mod_TP.seas) )
+```
+
+### 4.1 response curves: temperatures
+
+```{r}
+#centering point at 10°C
+myCen <- 10
+cptmean <- crosspred(cbTemp, mod_TP, cen=myCen, by=1, at=0:40)
+cptmean.seas <- crosspred(cbTemp, mod_TP.seas, cen=myCen, by=1, at=0:40)
+
+# Overall cumulative
+plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)", col=2,
+     main="Temperature: overall cumulative exposure-response")
+plot(cptmean.seas, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)", col=2,
+     main="Temperature + Seasonality: overall cumulative exposure-response")
+```
