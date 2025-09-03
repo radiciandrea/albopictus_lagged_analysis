@@ -1016,7 +1016,7 @@ seas %>%
 ### 5.1 Predict egg laying seasonality in Europe (Extrapolation)
 
 ```{r}
-env.matrix <- readRDS("envMatrix_2008_2023.RDS") %>% 
+env.matrix <- readRDS("envMatrix_2018_2023.RDS") %>% 
   rename(medianTweek= tas, cumPrecweek=tp) %>% 
   filter(year > 2018) %>%
   as_tibble()
