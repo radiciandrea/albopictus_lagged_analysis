@@ -47,6 +47,8 @@ library(pbs)
 library(terra)
 library(sf)
 library(mapview)
+library(metafor) 
+library(scales)
 
 bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>% 
   select(ID, Country, Region, year, latitude, longitude, week, date, value, 
@@ -56,6 +58,13 @@ bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>%
          eggs=floor(eggs)) %>% 
   as_tibble()
 ```
+Remove the NAs
+
+```{r}
+bio.matrix_sel <- bio.matrix_sel %>% 
+  filter(!is.na(eggs))
+```
+
 A map was created to illustrate the geographical distribution of the sampling locations.
 
 ```{r}
@@ -65,117 +74,102 @@ bio.matrix_sel %>%
   st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
   mapview()
 ```
-One location ID was excluded from the initial analysis to be used later for model validation.
-```{r}
-ID_val = "6776"
-
-mydf <- bio.matrix_sel %>% 
-   filter(ID != ID_val) 
-
-# plot validation plot location
-bio.matrix_sel %>% 
-  filter(ID == ID_val) %>%  
-  select(long, lat) %>% 
-  distinct() %>% 
-  st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
-  mapview()
-```
 We apply log10 transformation to **brutally** account for the negative binomial distribution
 ```{r}
-mydf$eggsL10<- log10(mydf$eggs+1)
+bio.matrix_sel$eggsL10<- log10(bio.matrix_sel$eggs+1)
 ```
 
-## 2. Trend and Seasonality
+## 2. Simple case (glm)
 
-Define spline transformation to capture the seasonal trends.
+## 2.1 First stage
+
+Following "Day5_Session1_Demo_TwoStage.R", we organise the data as a list of dataframes for the first stage. First, we define regions, supposedly homogeneous in terms of (a) climate (b) sampling (c) mosquito pressure... And we split our df as a list of df (one for each region)
+
 ```{r}
-# long interannual temporal trend
-dftrend <- round(as.numeric(diff(range(mydf$date))/365.25 * length(unique(mydf$year)))) 
-btrend <- ns(mydf$date, knots=equalknots(mydf$date, dftrend-1))
-# seasonal intraannual trend
-mydf$week <- as.numeric(mydf$week)
-mydf$year <- as.factor(mydf$year)
-bseas <- ns(mydf$week, df=4) 
+
+regions <- as.character(unique(bio.matrix_sel$Region))
+bio.list_sel <- lapply(regions, function(r) bio.matrix_sel[bio.matrix_sel$Region==r,])
+names(bio.list_sel) <- regions
+
 ```
 
-Define the stratum as a grouping factor (so far, we're not using it)
+We will first explore a simple, gnl-based design, to obtain the relative risk as a function of temperature (but semi poisson)
+
 ```{r}
-mydf$stratum <- with(mydf, year)
+
+logRR <- logRRse <- vector("numeric", length(regions))
+for(i in seq(bio.list_sel)) {
+  sub <- bio.list_sel[[i]]
+  
+  nYears = length(unique(sub$year))# to regulate the df of the ns
+  
+  # Why temperatures in Veneto are negative?
+  
+  m <- glm(eggs ~  medianTweek + ns(date, 7*nYears) + (1 | ID),
+    data=sub) #family=quasipoisson()
+  
+  logRR[i] <- coef(m)["medianTweek"]
+  logRRse[i] <- sqrt(vcov(m)["medianTweek","medianTweek"])
+}
+
+
 ```
 
-## 3. Bivariate model
-
-To jointly assess the effects of temperature and precipitation on egg abundance, we implement a set of bivariate models using crossbasis functions for both predictors.
-
-* **mod_TP**: A multivariate model including both temperature (cbTemp) and precipitation (cbPrec) as predictors. This model evaluates the combined and independent effects of the two climatic variables on the response variable (eggsL10).
-
-* **mod_TP.seas**: An extended version of the multivariate model that also includes a seasonal component (bseas). This allows us to disentangle the climatic effects from seasonal patterns in egg abundance.
-
-* **mod_TP_pred**: A predictive multivariate model, where the crossbasis is pre-computed and passed as a separate data frame. This setup supports forecasting or imputing values in weeks with missing data.
+## 2.2 Second stage
+Therefore we pool estimates (with univariate random effects meta-analysis) and we plot the RR per region and divided
 
 ```{r}
-# Fit mod_Tel to analyse coefficients
-mod_TP <- gnm(eggsL10 ~  cbTemp + cbPrec,
-           #eliminate=stratum, #grouping factor
-           data=mydf,
-           family=gaussian(),
-           na.action= "na.exclude")
 
-mod_TP.seas <- gnm(eggsL10 ~ cbTemp + cbPrec + bseas*year, # + btrend,
-           #eliminate=stratum, #grouping factor
-           data=mydf,
-           family=gaussian(),
-           na.action= "na.exclude")
+uni <- rma(yi=logRR, sei=logRRse, slab=regions, measure="RR")
 
-# define predictive model
-cbTemp_df <- as.data.frame(cbTemp)
-cbPrec_df <- as.data.frame(cbPrec)
-colnames(cbTemp_df) <- paste0("cbT", seq_len(ncol(cbTemp_df)))
-colnames(cbPrec_df) <- paste0("cbP", seq_len(ncol(cbPrec_df)))
+ci.exp(uni)
 
-cbTempPrec_df <- cbind(cbTemp_df, cbPrec_df)
-mydf_ext <- cbind(mydf, cbTempPrec_df)
+forest(uni, transf=exp, refline=1, pch=23, bg=4, col=2,
+  main="Temperature and laid eggs")
 
-# Build formula with those columns
-form <- as.formula(paste("eggsL10 ~", paste(colnames(cbTempPrec_df), collapse = " + ")))
-
-# Fit mod_Tel to predict on new data
-mod_TP_pred <- gnm(form,
-                data = mydf_ext,
-                family = gaussian(),
-                na.action = "na.exclude")
-
-bseas_df <- as.data.frame(bseas)
-colnames(bseas_df) <- paste0("bt", seq_len(ncol(bseas_df)))
-mydf_ext.seas <- cbind(mydf, cbTempPrec_df, bseas_df) #btrend
-
-# Build formula with those columns
-form <- as.formula(paste("eggsL10 ~", paste(colnames( cbind(cbTempPrec_df ,  bseas_df)), collapse = " + "))) # btrend_df,
-
-mod_TP.seas_pred <- gnm(form,
-                data = mydf_ext.seas,
-                family = gaussian(),
-                na.action = "na.exclude")
 ```
 
-Investigate the AIC on all the model produced so far: 
+Not so nice!
+
+## 3. Lagged distributed case
+
+Here we replicate the previous case, with lagged temperatures
+
+Create empty matrices to store the COEF and VCOV
 
 ```{r}
-data.frame( models = c("Temperature", "Temperature + seasonality", "Precipitation",  "Precipitation + seasonality", "Temperature + Precipitation", "Temperature + Precipitation + seasonality"),
-            AIC =AIC(mod_T, mod_T.seas, mod_P, mod_P.seas, mod_TP, mod_TP.seas) )
+coef <- matrix(NA,length(bio.list_sel), 4, dimnames=list(regions,paste0("b",seq(4))))
+S <- vector("list",length(bio.list_sel))
+names(S) <- regions
+
 ```
 
-### 4.1 response curves: temperatures
+Define the crossbasis (CB) for temperature (fixed to define the same parametrization across regions)
 
 ```{r}
-#centering point at 10°C
-myCen <- 10
-cptmean <- crosspred(cbTemp, mod_TP, cen=myCen, by=1, at=0:40)
-cptmean.seas <- crosspred(cbTemp, mod_TP.seas, cen=myCen, by=1, at=0:40)
+bound <- rowMeans(sapply(bio.list_sel, function(x) range(x$medianTweek, na.rm = T)))
+varknots <- equalknots(bound, fun="bs", degree=2, df=4)
+lagknots <- logknots(6, df=5, int=T) #modified lags from 21 to 6
+argvar <- list(fun="bs", degree=2, knots=varknots, Bound=bound)
+arglag <- list(fun="ns", knots=lagknots)
 
-# Overall cumulative
-plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)", col=2,
-     main="Temperature: overall cumulative exposure-response")
-plot(cptmean.seas, ptype="overall", xlab="Temperature (°C)", ylab="Increment (Log10)", col=2,
-     main="Temperature + Seasonality: overall cumulative exposure-response")
+
+```
+
+## 3.1 First stage
+
+Run the loop
+
+```{r}
+
+
+for(i in seq(bio.list_sel)) {
+  cb <- crossbasis(bio.list_sel[[i]]$medianTweek, lag=6, argvar=argvar, arglag=arglag)
+  m <- glm(eggs ~ cb + ns(date, 2), family=quasipoisson(),
+    data=bio.list_sel[[i]])
+  cr <- crossreduce(cb,m, cen=3)
+  coef[i,] <- coef(cr)
+  S[[i]] <- vcov(cr)
+}
+
 ```
