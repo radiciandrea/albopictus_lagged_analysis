@@ -49,6 +49,7 @@ library(sf)
 library(mapview)
 library(metafor) 
 library(scales)
+library(lme4)
 
 bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>% 
   select(ID, Country, Region, year, latitude, longitude, week, date, value, 
@@ -56,6 +57,7 @@ bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>%
   rename(eggs=value, medianTweek= tas, cumPrecweek=tp, long= longitude, lat = latitude) %>% 
   mutate(month=month(date), 
          eggs=floor(eggs)) %>% 
+  mutate(ID = as.factor(ID)) %>%
   as_tibble()
 ```
 Remove the NAs
@@ -93,22 +95,33 @@ names(bio.list_sel) <- regions
 
 ```
 
-We will first explore a simple, gnl-based design, to obtain the relative risk as a function of temperature (but semi poisson)
+We will first explore a simple, glm-based design, to obtain the relative risk as a function of temperature (but semi poisson). Natural spline over date and year, random effect over the ID.
 
 ```{r}
 
 logRR <- logRRse <- vector("numeric", length(regions))
 for(i in seq(bio.list_sel)) {
+  
+  cat(i, "\n")
   sub <- bio.list_sel[[i]]
   
-  nYears = length(unique(sub$year))# to regulate the df of the ns
+  nYears = length(unique(sub$year))# to regulate the df of the ns as ns(date, 7*nYears). No, it does not work
   
-  # Why temperatures in Veneto are negative?
   
-  m <- glm(eggs ~  medianTweek + ns(date, 7*nYears) + (1 | ID),
-    data=sub) #family=quasipoisson()
+  if(length(unique(sub$ID))>1){
+    m <- glmer(eggs ~  medianTweek + ns(date, nYears) + (1|ID),
+               data=sub, family=poisson())
+    
+    logRR[i] <- coef(m)$ID["medianTweek"][1,1]
+  } else {
+    m <- glm(eggs ~  medianTweek + ns(date, nYears),
+             data=sub, family=poisson())
+    
+    logRR[i] <- coef(m)["medianTweek"]
+  }
   
-  logRR[i] <- coef(m)["medianTweek"]
+  
+  
   logRRse[i] <- sqrt(vcov(m)["medianTweek","medianTweek"])
 }
 
@@ -129,7 +142,7 @@ forest(uni, transf=exp, refline=1, pch=23, bg=4, col=2,
 
 ```
 
-Not so nice!
+This is nice eventually
 
 ## 3. Lagged distributed case
 
