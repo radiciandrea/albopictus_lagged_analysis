@@ -155,6 +155,7 @@ Actually, at each time we remove a region, new regions create problems...
 ```{r}
 
 regions <- as.character(unique(bio.matrix_sel$Region))
+regions <- regions[!(regions %in% c("Vlore", "Autonomous Province of Trento", "Fier"))]
 # regions <- regions[!(regions %in% c("Vlore", "Autonomous Province of Trento", "Sicily"))]
 # regions <- regions[!(regions %in% c("Puglia", "Lushnje", "Fier", "Vlore", "Sicily", "Autonomous Province of Trento"))]
 bio.list_sel <- lapply(regions, function(r) bio.matrix_sel[bio.matrix_sel$Region==r,])
@@ -174,8 +175,10 @@ names(S) <- regions
 Define the crossbasis (CB) for temperature (fixed to define the same parametrization across regions)
 
 ```{r}
-bound <- rowMeans(sapply(bio.list_sel, function(x) range(x$medianTweek, na.rm = T)))
-varknots <- equalknots(bound, fun="bs", degree=4, df=10) #modified degree = 2, df = 4
+# bound <- rowMeans(sapply(bio.list_sel, function(x) range(x$medianTweek, na.rm = T)))
+
+bound <- c(0.14, 28.77) # force bounds to assume given values
+varknots <- equalknots(bound, fun="bs", degree=2, df=4) #modified degree = 2, df = 4
 lagknots <- logknots(6, df=5, int=T) #modified lags from 21 to 6
 argvar <- list(fun="bs", degree=2, knots=varknots, Bound=bound)
 arglag <- list(fun="ns", knots=lagknots)
@@ -232,4 +235,5 @@ mix <- mixmeta(coef~1, S, method="ml")
 print(summary(mix), digits=3)
 
 ```
+
 
