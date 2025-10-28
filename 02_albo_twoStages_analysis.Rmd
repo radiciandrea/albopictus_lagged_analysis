@@ -50,6 +50,7 @@ library(mapview)
 library(metafor) 
 library(scales)
 library(lme4)
+library(mixmeta)
 
 bio.matrix_sel <- readRDS("VectAbundance015_ER5.RDS") %>% 
   select(ID, Country, Region, year, latitude, longitude, week, date, value, 
@@ -76,7 +77,7 @@ bio.matrix_sel %>%
   st_as_sf(coords=c("long", "lat"), crs=4326) %>% 
   mapview()
 ```
-We apply log10 transformation to **brutally** account for the negative binomial distribution
+We apply log10 transformation to **brutally** account for the negative binomial distribution. we'll try not to use so far
 ```{r}
 bio.matrix_sel$eggsL10<- log10(bio.matrix_sel$eggs+1)
 ```
@@ -105,7 +106,7 @@ for(i in seq(bio.list_sel)) {
   cat(i, "\n")
   sub <- bio.list_sel[[i]]
   
-  nYears = length(unique(sub$year))# to regulate the df of the ns as ns(date, 7*nYears). No, it does not work
+  nYears = length(unique(sub$year))# to regulate the df of the ns as ns(date, nYears). 
   
   
   if(length(unique(sub$ID))>1){
@@ -146,9 +147,22 @@ This is nice eventually
 
 ## 3. Lagged distributed case
 
-Here we replicate the previous case, with lagged temperatures
+TEMPORARY Some regions give some problems later: remove them
 
-Create empty matrices to store the COEF and VCOV
+Actually, at each time we remove a region, new regions create problems...
+
+
+```{r}
+
+regions <- as.character(unique(bio.matrix_sel$Region))
+# regions <- regions[!(regions %in% c("Vlore", "Autonomous Province of Trento", "Sicily"))]
+# regions <- regions[!(regions %in% c("Puglia", "Lushnje", "Fier", "Vlore", "Sicily", "Autonomous Province of Trento"))]
+bio.list_sel <- lapply(regions, function(r) bio.matrix_sel[bio.matrix_sel$Region==r,])
+names(bio.list_sel) <- regions
+
+```
+
+Here we replicate the previous case, with lagged temperatures. We create empty matrices to store the COEF and VCOV
 
 ```{r}
 coef <- matrix(NA,length(bio.list_sel), 4, dimnames=list(regions,paste0("b",seq(4))))
@@ -161,7 +175,7 @@ Define the crossbasis (CB) for temperature (fixed to define the same parametriza
 
 ```{r}
 bound <- rowMeans(sapply(bio.list_sel, function(x) range(x$medianTweek, na.rm = T)))
-varknots <- equalknots(bound, fun="bs", degree=2, df=4)
+varknots <- equalknots(bound, fun="bs", degree=4, df=10) #modified degree = 2, df = 4
 lagknots <- logknots(6, df=5, int=T) #modified lags from 21 to 6
 argvar <- list(fun="bs", degree=2, knots=varknots, Bound=bound)
 arglag <- list(fun="ns", knots=lagknots)
@@ -171,18 +185,51 @@ arglag <- list(fun="ns", knots=lagknots)
 
 ## 3.1 First stage
 
-Run the loop
+Run the loop, which is quite slow
 
 ```{r}
 
-
 for(i in seq(bio.list_sel)) {
-  cb <- crossbasis(bio.list_sel[[i]]$medianTweek, lag=6, argvar=argvar, arglag=arglag)
-  m <- glm(eggs ~ cb + ns(date, 2), family=quasipoisson(),
-    data=bio.list_sel[[i]])
+  cat(i, "\n")
+  cat(names(bio.list_sel[i]), "\n")
+  sub <- bio.list_sel[[i]]
+  
+  cb <- crossbasis(sub$medianTweek, lag=6, argvar=argvar, arglag=arglag)
+  # m <- glm(eggs ~ cb + ns(date, 2), family=quasipoisson(),
+  #   data=sub)
+  # 
+  
+  nYears = length(unique(sub$year))# to regulate the df of the ns as ns(date, nYears). 
+  
+  
+  if(length(unique(sub$ID))>1){
+    m <- glmer(eggs ~  cb + ns(date, nYears) + (1|ID),
+               data=sub, family=poisson())
+    
+  } else {
+    m <- glm(eggs ~ cb + ns(date, nYears),
+             data=sub, family=poisson())
+    
+  }
+  
   cr <- crossreduce(cb,m, cen=3)
   coef[i,] <- coef(cr)
   S[[i]] <- vcov(cr)
 }
 
 ```
+
+## 3.2 Second stage
+
+### 3.2.1 Multivariate meta analysis
+
+Therefore we should pool the estimates with mixmeta
+
+
+```{r}
+
+mix <- mixmeta(coef~1, S, method="ml")
+print(summary(mix), digits=3)
+
+```
+
