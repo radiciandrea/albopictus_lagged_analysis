@@ -215,14 +215,14 @@ for(i in seq(bio.list_sel)) {
     
   }
   
-  cr <- crossreduce(cb,m, cen=3)
+  cr <- crossreduce(cb,m, cen=15)
   coef[i,] <- coef(cr)
   S[[i]] <- vcov(cr)
 }
 
 ```
 
-## 3.2 Second stage
+## 3.2 Second stage (Pooled)
 
 ### 3.2.1 Multivariate meta analysis
 
@@ -236,4 +236,55 @@ print(summary(mix), digits=3)
 
 ```
 
+### 3.2.2 Blups 
+
+Best linear unbiased predictions (trade-off between location-specific estimates from the first stage and the pooled mean)
+
+```{r}
+
+mixblup <- mixmeta::blup(mix, vcov=TRUE)
+
+```
+
+### 3.2.3 pooled, first stage, blup estimates
+
+Recompute spline stransormation over weekly temperatures
+
+```{r}
+
+xvar <- seq(bound[1], bound[2], by=0.1)
+bvar <- do.call("onebasis", c(list(x=xvar), argvar))
+```
+
+
+Compute predictions for the each estimate
+
+```{r}
+predpool <- crosspred(bvar, coef=coef(mix), vcov=vcov(mix), model.link="log",
+  by=0.1, cen=15)
+predreg <- lapply(seq(nrow(coef)),function(i) crosspred(bvar, coef=coef[i,],
+  vcov=S[[i]], model.link="log", cen=15))
+predblup <- lapply(seq(nrow(coef)),function(i) crosspred(bvar,
+  coef=mixblup[[i]]$blup, vcov=mixblup[[i]]$vcov, model.link="log", cen=15))
+
+
+```
+
+And plot. So far, the predpool prediction is meaningless, but some of the predpool look more interesting.
+
+```{r}
+
+seq_plot = c(1:4, 6, 8, 9)
+
+layout(t(1:2))
+plot(predpool, type="l", ci="n", ylab="RR", ylim=c(.9,1.8), lwd=2,
+  xlab="Average weekly temperature (°C)", main="Pooled and first-stage")
+for(i in seq_plot) lines(predreg[[i]], col=alpha(4,0.3))
+
+plot(predpool, type="l", ci="n", ylab="RR", ylim=c(.9,1.8), lwd=2,
+  xlab="Average weekly temperature (°C)", main="Pooled and BLUPs")
+for(i in seq_plot) lines(predblup[[i]], col=alpha(2,0.3))
+layout(1)
+
+```
 
