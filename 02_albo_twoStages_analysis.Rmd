@@ -112,16 +112,22 @@ for(i in seq(bio.list_sel)) {
   if(length(unique(sub$ID))>1){
     m <- glmer(eggs ~  medianTweek + ns(date, nYears) + (1|ID),
                data=sub, family=poisson())
-    
     logRR[i] <- coef(m)$ID["medianTweek"][1,1]
+    
+    # m <- glm(eggs ~  medianTweek + ns(date, nYears),
+    #          data=sub, family=poisson())
+    # 
+    # logRR[i] <- coef(m)["medianTweek"]
+    
+    # guarda AIC con e senza ID
+    
+    
   } else {
     m <- glm(eggs ~  medianTweek + ns(date, nYears),
              data=sub, family=poisson())
     
     logRR[i] <- coef(m)["medianTweek"]
   }
-  
-  
   
   logRRse[i] <- sqrt(vcov(m)["medianTweek","medianTweek"])
 }
@@ -134,7 +140,11 @@ Therefore we pool estimates (with univariate random effects meta-analysis) and w
 
 ```{r}
 
-uni <- rma(yi=logRR, sei=logRRse, slab=regions, measure="RR")
+# uni <- rma(yi=logRR, sei=logRRse, slab=regions, measure="RR")
+uni <- rma(yi=logRR, sei=logRRse, slab=regions, measure="GEN")
+# sceglieire uno dei due
+
+#
 
 ci.exp(uni)
 
@@ -248,7 +258,7 @@ mixblup <- mixmeta::blup(mix, vcov=TRUE)
 
 ### 3.2.3 pooled, first stage, blup estimates
 
-Recompute spline stransormation over weekly temperatures
+Recompute spline transormation over weekly temperatures
 
 ```{r}
 
