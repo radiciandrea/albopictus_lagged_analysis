@@ -159,8 +159,6 @@ This is nice eventually
 
 TEMPORARY Some regions give some problems later: remove them
 
-Actually, at each time we remove a region, new regions create problems...
-
 
 ```{r}
 
