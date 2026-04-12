@@ -120,31 +120,6 @@ plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (ratio)", col=2,
 
 layout(1)
 
-## Es. plot ----
-
-#da replicare anche negli altri chunk
-
-ID_es = 8649
-year_es = 2022
-
-eggs_mod_id = mod_T.seas$model %>%
-  mutate(id_x = (year == year_es)*(`as.factor(ID)` == ID_es))
-
-eggs_mod = mod_T.P.seas$fitted.values[which(eggs_mod_id$id_x ==1)]
-
-eggs_obs = mod_T.P.seas$model %>%
-  filter(eggs_mod_id$id_x ==1) %>%
-  pull(eggs)
-
-date_obs = bio.matrix_sel %>%
-  filter(year == year_es) %>%
-  filter(ID == ID_es) %>%
-  filter(!is.na(eggs)) %>%
-  pull(date)
-
-plot(date_obs, eggs_obs)
-points(date_obs, eggs_mod, col = 'blue')
-
 
 # 2. T.P.seas ----
 
@@ -337,3 +312,46 @@ plot(cppmean, lag=8, xlab="P (mm)", ylab="Increment (ratio)", col=2,
      main="lag = 8", ylim = c(0,2))
 
 layout(1)
+
+
+# 4. Plots ----
+
+#da replicare anche negli altri chunk
+
+ID_es = 8649
+year_es = 2022
+
+eggs_mod_id = mod_T.seas$model %>%
+  mutate(id_x = (year == year_es)*(`as.factor(ID)` == ID_es))
+
+eggs_obs = mod_T.P.seas$model %>%
+  filter(eggs_mod_id$id_x ==1) %>%
+  pull(eggs)
+
+date_obs = bio.matrix_sel %>%
+  filter(year == year_es) %>%
+  filter(ID == ID_es) %>%
+  filter(!is.na(eggs)) %>%
+  pull(date)
+
+
+eggs_mod_T.seas = mod_T.seas$fitted.values[which(eggs_mod_id$id_x ==1)]
+
+eggs_mod_T.P.seas = mod_T.P.seas$fitted.values[which(eggs_mod_id$id_x ==1)]
+
+eggs_mod_T.P.seas.trend = mod_T.P.seas.trend$fitted.values[which(eggs_mod_id$id_x ==1)]
+
+
+plot(date_obs, eggs_obs)
+
+points(date_obs, eggs_mod_T.seas, col = 'blue')
+RMSE_T.seas = sqrt(mean((eggs_obs - eggs_mod_T.seas)))
+RMSE_T.seas  
+
+points(date_obs, eggs_mod_T.P.seas, col = 'darkgreen')
+RMSE_T.P.seas = sqrt(mean((eggs_obs - eggs_mod_T.P.seas)))
+RMSE_T.P.seas  
+
+points(date_obs, eggs_mod_T.P.seas.trend, col = 'darkred')
+RMSE_T.P.seas.trend = sqrt(mean((eggs_obs - eggs_mod_T.P.seas.trend)))
+RMSE_T.P.seas.trend  
