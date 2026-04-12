@@ -120,6 +120,32 @@ plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (ratio)", col=2,
 
 layout(1)
 
+## Es. plot ----
+
+#da replicare anche negli altri chunk
+
+ID_es = 8649
+year_es = 2022
+
+eggs_mod_id = mod_T.seas$model %>%
+  mutate(id_x = (year == year_es)*(`as.factor(ID)` == ID_es))
+
+eggs_mod = mod_T.P.seas$fitted.values[which(eggs_mod_id$id_x ==1)]
+
+eggs_obs = mod_T.P.seas$model %>%
+  filter(eggs_mod_id$id_x ==1) %>%
+  pull(eggs)
+
+date_obs = bio.matrix_sel %>%
+  filter(year == year_es) %>%
+  filter(ID == ID_es) %>%
+  filter(!is.na(eggs)) %>%
+  pull(date)
+
+plot(date_obs, eggs_obs)
+points(date_obs, eggs_mod, col = 'blue')
+
+
 # 2. T.P.seas ----
 
 # T.P.seas and year 
