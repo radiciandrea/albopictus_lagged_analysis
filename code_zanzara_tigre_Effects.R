@@ -89,16 +89,16 @@ plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment ratio",
 
 ## Marginal effects of lags at different temperatures ----
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cptmean, var=6, xlab="Lag", ylab="Increment (Log10)", col=2, 
+plot(cptmean, var=6, xlab="Lag", ylab="Increment (ratio)", col=2, 
      main="Temperature = 6 °C", ylim = c(0, 3))
 
-plot(cptmean, var=14, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=14, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 14 °C", ylim = c(0, 3))
 
-plot(cptmean, var=22, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=22, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 22 °C", ylim = c(0, 3))
 
-plot(cptmean, var=30, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=30, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 30 °C", ylim = c(0, 3))
 
 layout(1)
@@ -106,16 +106,16 @@ layout(1)
 ## Marginal effects of temperatues at different lags ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cptmean, lag=0, xlab="T (°C)", ylab="Increment (Log10)", col=2, 
+plot(cptmean, lag=0, xlab="T (°C)", ylab="Increment (ratio)", col=2, 
      main="lag = 0", ylim = c(0, 3))
 
-plot(cptmean, lag=2, xlab="T (°C)", ylab="Increment (Log10)", col=2, 
+plot(cptmean, lag=2, xlab="T (°C)", ylab="Increment (ratio)", col=2, 
      main="lag = 2", ylim = c(0, 3))
 
-plot(cptmean, lag=4, xlab="T (°C)", ylab="Increment (Log10)", col=2,
+plot(cptmean, lag=4, xlab="T (°C)", ylab="Increment (ratio)", col=2,
      main="lag = 4", ylim = c(0, 3))
 
-plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (Log10)", col=2,
+plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (ratio)", col=2,
      main="lag = 8", ylim = c(0, 3))
 
 layout(1)
@@ -144,16 +144,16 @@ plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment ratio",
 
 ## Marginal effects of lags at different temperatures ----
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cptmean, var=6, xlab="Lag", ylab="Increment (Log10)", col=2, 
+plot(cptmean, var=6, xlab="Lag", ylab="Increment (ratio)", col=2, 
      main="Temperature = 6 °C", ylim = c(0, 3))
 
-plot(cptmean, var=14, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=14, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 14 °C", ylim = c(0, 3))
 
-plot(cptmean, var=22, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=22, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 22 °C", ylim = c(0, 3))
 
-plot(cptmean, var=30, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=30, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 30 °C", ylim = c(0, 3))
 
 layout(1)
@@ -161,16 +161,16 @@ layout(1)
 ## Marginal effects of temperature at different lags ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cptmean, lag=0, xlab="T (°C)", ylab="Increment (Log10)", col=2, 
+plot(cptmean, lag=0, xlab="T (°C)", ylab="Increment (ratio)", col=2, 
      main="lag = 0", ylim = c(0, 3))
 
-plot(cptmean, lag=2, xlab="T (°C)", ylab="Increment (Log10)", col=2, 
+plot(cptmean, lag=2, xlab="T (°C)", ylab="Increment (ratio)", col=2, 
      main="lag = 2", ylim = c(0, 3))
 
-plot(cptmean, lag=4, xlab="T (°C)", ylab="Increment (Log10)", col=2,
+plot(cptmean, lag=4, xlab="T (°C)", ylab="Increment (ratio)", col=2,
      main="lag = 4", ylim = c(0, 3))
 
-plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (Log10)", col=2,
+plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (ratio)", col=2,
      main="lag = 8", ylim = c(0, 3))
 
 layout(1)
@@ -186,16 +186,16 @@ plot(cppmean, ptype="overall", xlab="Precipitation", ylab="Increment ratio", col
 ## Marginal effects of lags at different cumulative precipitation ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cppmean, var=0, xlab="Lag", ylab="Increment (Log10)", col=2, 
+plot(cppmean, var=0, xlab="Lag", ylab="Increment (ratio)", col=2, 
      main="Precipitation = 0 mm", ylim = c(0.75, 1.25))
 
-plot(cppmean, var=10, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cppmean, var=10, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Precipitation = 10 mm", ylim = c(0.75, 1.25))
 
-plot(cppmean, var=20, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cppmean, var=20, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Precipitation = 20 mm", ylim = c(0.75, 1.25))
 
-plot(cppmean, var=30, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cppmean, var=30, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Precipitation = 30 mm", ylim = c(0.75, 1.25))
 
 layout(1)
@@ -203,16 +203,16 @@ layout(1)
 ## Marginal effects of precipitation at different lags ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cppmean, lag=0, xlab="P (mm)", ylab="Increment (Log10)", col=2, 
+plot(cppmean, lag=0, xlab="P (mm)", ylab="Increment (ratio)", col=2, 
      main="lag = 0", ylim = c(0,2))
 
-plot(cppmean, lag=2, xlab="P (mm)", ylab="Increment (Log10)", col=2, 
+plot(cppmean, lag=2, xlab="P (mm)", ylab="Increment (ratio)", col=2, 
      main="lag = 2", ylim = c(0,2))
 
-plot(cppmean, lag=4, xlab="P (mm)", ylab="Increment (Log10)", col=2,
+plot(cppmean, lag=4, xlab="P (mm)", ylab="Increment (ratio)", col=2,
      main="lag = 4", ylim = c(0,2))
 
-plot(cppmean, lag=8, xlab="P (mm)", ylab="Increment (Log10)", col=2,
+plot(cppmean, lag=8, xlab="P (mm)", ylab="Increment (ratio)", col=2,
      main="lag = 8", ylim = c(0,2))
 
 layout(1)
@@ -238,16 +238,16 @@ plot(cptmean, ptype="overall", xlab="Temperature (°C)", ylab="Increment ratio",
 
 ## Marginal effects of lags at different temperatures ----
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cptmean, var=6, xlab="Lag", ylab="Increment (Log10)", col=2, 
+plot(cptmean, var=6, xlab="Lag", ylab="Increment (ratio)", col=2, 
      main="Temperature = 6 °C", ylim = c(0, 3))
 
-plot(cptmean, var=14, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=14, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 14 °C", ylim = c(0, 3))
 
-plot(cptmean, var=22, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=22, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 22 °C", ylim = c(0, 3))
 
-plot(cptmean, var=30, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cptmean, var=30, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Temperature = 30 °C", ylim = c(0, 3))
 
 layout(1)
@@ -255,16 +255,16 @@ layout(1)
 ## Marginal effects of temperature at different lags ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cptmean, lag=0, xlab="T (°C)", ylab="Increment (Log10)", col=2, 
+plot(cptmean, lag=0, xlab="T (°C)", ylab="Increment (ratio)", col=2, 
      main="lag = 0", ylim = c(0, 3))
 
-plot(cptmean, lag=2, xlab="T (°C)", ylab="Increment (Log10)", col=2, 
+plot(cptmean, lag=2, xlab="T (°C)", ylab="Increment (ratio)", col=2, 
      main="lag = 2", ylim = c(0, 3))
 
-plot(cptmean, lag=4, xlab="T (°C)", ylab="Increment (Log10)", col=2,
+plot(cptmean, lag=4, xlab="T (°C)", ylab="Increment (ratio)", col=2,
      main="lag = 4", ylim = c(0, 3))
 
-plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (Log10)", col=2,
+plot(cptmean, lag=8, xlab="T (°C)", ylab="Increment (ratio)", col=2,
      main="lag = 8", ylim = c(0, 3))
 
 layout(1)
@@ -281,16 +281,16 @@ plot(cppmean, ptype="overall", xlab="Precipitation", ylab="Increment ratio", col
 ## Marginal effects of lags at different cumulative precipitation ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cppmean, var=0, xlab="Lag", ylab="Increment (Log10)", col=2, 
+plot(cppmean, var=0, xlab="Lag", ylab="Increment (ratio)", col=2, 
      main="Precipitation = 0 mm", ylim = c(0,2))
 
-plot(cppmean, var=50, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cppmean, var=50, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Precipitation = 50 mm", ylim = c(0,2))
 
-plot(cppmean, var=100, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cppmean, var=100, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Precipitation = 100 mm", ylim = c(0,2))
 
-plot(cppmean, var=200, xlab="Lag", ylab="Increment (Log10)", col=2,
+plot(cppmean, var=200, xlab="Lag", ylab="Increment (ratio)", col=2,
      main="Precipitation = 200 mm", ylim = c(0,2))
 
 layout(1)
@@ -298,16 +298,16 @@ layout(1)
 ## Marginal effects of precipitation at different lags ----
 
 layout(matrix(1:4, ncol=2, nrow = 2))
-plot(cppmean, lag=0, xlab="P (mm)", ylab="Increment (Log10)", col=2, 
+plot(cppmean, lag=0, xlab="P (mm)", ylab="Increment (ratio)", col=2, 
      main="lag = 0", ylim = c(0,2))
 
-plot(cppmean, lag=2, xlab="P (mm)", ylab="Increment (Log10)", col=2, 
+plot(cppmean, lag=2, xlab="P (mm)", ylab="Increment (ratio)", col=2, 
      main="lag = 2", ylim = c(0,2))
 
-plot(cppmean, lag=4, xlab="P (mm)", ylab="Increment (Log10)", col=2,
+plot(cppmean, lag=4, xlab="P (mm)", ylab="Increment (ratio)", col=2,
      main="lag = 4", ylim = c(0,2))
 
-plot(cppmean, lag=8, xlab="P (mm)", ylab="Increment (Log10)", col=2,
+plot(cppmean, lag=8, xlab="P (mm)", ylab="Increment (ratio)", col=2,
      main="lag = 8", ylim = c(0,2))
 
 layout(1)
