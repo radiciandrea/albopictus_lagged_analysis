@@ -64,7 +64,7 @@ pknots<-unname(quantile(bio.matrix_sel$cumPrecweek, probs = c(0.25, 0.5, 0.75), 
 cbPrec <- crossbasis(bio.matrix_sel$cumPrecweek, lag=tlag,
                      argvar=list(fun="bs", degree=2, knots=pknots),
                      arglag=list(knots=c(1,4)),
-                     group=bio.matrix_fit_i$Region)
+                     group=bio.matrix_sel$Region)
 
 # 1. T.seas ----
 
