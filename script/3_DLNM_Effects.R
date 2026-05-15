@@ -241,6 +241,9 @@ trap_intercepts_df <- bio.matrix_sel %>%
     .groups   = "drop"
   )
 
+# summary of the exponential of the intercepts (this is to test that it is 0)
+summary(exp(trap_intercepts_df$intercept))
+
 cat("Trap intercepts computed:", nrow(trap_intercepts_df), "\n")
 
 # Population-average intercept for unknown trap IDs  
@@ -425,7 +428,7 @@ write.csv(table4, "outputs/Table4_spatial_validation.csv", row.names = FALSE)
 print(table4)
 
 ## 6.9 Visual check — example trap ----
-ID_check <- 4228
+ID_check <- 3769 #4228
 
 check_df <- bio.matrix_test_years_known %>%
   dplyr::filter(ID == ID_check) %>%
