@@ -262,7 +262,7 @@ bio.matrix_test_years_known <- bio.matrix_test_years %>%
   dplyr::filter(ID %in% known)
 
 # Prediction function  
-predict_with_intercept <- function(newdata, mod, bseas_cal,
+predict_with_intercept <- function(newdata, mod,
                                    tknots, pknots,
                                    intercept_lookup,
                                    avg_intercept,
@@ -277,7 +277,7 @@ predict_with_intercept <- function(newdata, mod, bseas_cal,
                         arglag = list(knots = c(1, 4)),
                         group  = newdata$Region)
   
-  bseas_new <- predict(bseas_cal, newx = newdata$weekn)
+  bseas_new <- ns(newdata$weekn, df = 4)
   
   X <- cbind(
     as.matrix(as.data.frame(cbT_new)),
@@ -320,12 +320,12 @@ eval_metrics <- function(obs, pred, label) {
 
 ## 6.4 Run predictions ----
 pred_years_known <- predict_with_intercept(
-  bio.matrix_test_years_known, mod_T.P.seas, bseas,
+  bio.matrix_test_years_known, mod_T.P.seas,
   tknots, pknots, trap_intercepts_df, avg_intercept
 )
 
 pred_regions <- predict_with_intercept(
-  bio.matrix_test_regions, mod_T.P.seas, bseas,
+  bio.matrix_test_regions, mod_T.P.seas,
   tknots, pknots, trap_intercepts_df, avg_intercept
 )
 
@@ -377,6 +377,20 @@ per_trap_r %>%
     .groups      = "drop"
   ) %>%
   dplyr::arrange(desc(median_r)) %>%
+  as.data.frame()
+
+#forse è giusto questo? da verificare
+bio.matrix_test_years_known %>%
+  dplyr::mutate(pred = pred_years_known) %>%
+  dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
+  dplyr::group_by(Region) %>%
+  dplyr::summarise(
+    n         = dplyr::n(),
+    RMSLE     = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 4),
+    Pearson_r = round(cor(eggs, pred, method = "pearson"), 4),
+    .groups   = "drop"
+  ) %>%
+  dplyr::arrange(RMSLE) %>%
   as.data.frame()
 
 ##6.8 Per-region breakdown — test_regions ----
