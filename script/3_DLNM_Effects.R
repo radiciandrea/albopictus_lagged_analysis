@@ -314,7 +314,7 @@ eval_metrics <- function(obs, pred, label) {
   cat("  N:        ", length(idx), "\n")
   cat("  RMSE:     ", round(sqrt(mean((obs - pred)^2)),                   3), "\n")
   cat("  MAE:      ", round(mean(abs(obs - pred)),                        3), "\n")
-  cat("  RMSLE:    ", round(sqrt(mean((log(pred + 1) - log(obs + 1))^2)), 4), "\n")
+  cat("  RMSLE:    ", round(sqrt(mean((log10(pred + 1) - log10(obs + 1))^2)), 4), "\n")
   cat("  Spearman's rank r:", round(cor(obs, pred, method = "spearman"),           4), "\n\n")
 }
 
@@ -353,7 +353,7 @@ per_trap_test_year <- bio.matrix_test_years_known %>%
   dplyr::summarise(
     n         = dplyr::n(),
     Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
-    RMSLE     = sqrt(mean((log(pred + 1) - log(eggs + 1))^2)),
+    RMSLE     = sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)),
     .groups   = "drop"
   ) %>%
   dplyr::filter(n >= 10) %>%
@@ -366,7 +366,7 @@ per_trap_test_regions <- bio.matrix_test_regions %>%
   dplyr::summarise(
     n         = dplyr::n(),
     Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
-    RMSLE     = sqrt(mean((log(pred + 1) - log(eggs + 1))^2)),
+    RMSLE     = sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)),
     .groups   = "drop"
   ) %>%
   dplyr::filter(n >= 10) %>%
@@ -392,8 +392,9 @@ bio.matrix_test_years_known %>%
   dplyr::group_by(Region) %>%
   dplyr::summarise(
     n         = dplyr::n(),
-    RMSLE     = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 4),
     Spearman_r = round(cor(eggs, pred, method = "spearman"), 4),
+    p_value_Sr    = round((cor.test(eggs, pred, method = "spearman"))$p.value,4),
+    RMSLE     = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 4),
     .groups   = "drop"
   ) %>%
   dplyr::arrange(RMSLE) %>%
@@ -406,12 +407,12 @@ bio.matrix_test_regions %>%
   dplyr::group_by(Region) %>%
   dplyr::summarise(
     n         = dplyr::n(),
-    RMSLE     = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 4),
     Spearman_r = round(cor(eggs, pred, method = "spearman"), 4),
+    p_value_Sr    = round((cor.test(eggs, pred, method = "spearman"))$p.value, 4),
+    RMSLE     = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 4),
     .groups   = "drop"
   ) %>%
-  dplyr::arrange(RMSLE) %>%
-  as.data.frame()
+  dplyr::arrange(RMSLE)
 
 # Table 3: Per-region — temporal test set  
 table3 <- bio.matrix_test_years_known %>%
@@ -422,7 +423,7 @@ table3 <- bio.matrix_test_years_known %>%
     n_traps      = dplyr::n_distinct(ID),
     n_trap_weeks = dplyr::n(),
     Spearman_r    = round(cor(eggs, pred, method = "spearman"), 3),
-    RMSLE        = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 3),
+    RMSLE        = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 3),
     .groups      = "drop"
   ) %>%
   dplyr::arrange(RMSLE)
@@ -439,7 +440,7 @@ table4 <- bio.matrix_test_regions %>%
     n_traps      = dplyr::n_distinct(ID),
     n_trap_weeks = dplyr::n(),
     Spearman_r    = round(cor(eggs, pred, method = "spearman"), 3),
-    RMSLE        = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 3),
+    RMSLE        = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 3),
     .groups      = "drop"
   ) %>%
   dplyr::arrange(RMSLE)

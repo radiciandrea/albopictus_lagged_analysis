@@ -304,7 +304,7 @@ for(i in 1:reps){
   obs_fit_i = mod_seas_i$fitted + mod_seas_i$residuals
   
   RMSE_fit_df$seas[i] = sqrt(mean((pred_seas_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$seas[i]  = sqrt(mean((log(pred_seas_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$seas[i]  = sqrt(mean((log10(pred_seas_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$seas[i]  = mean(abs(pred_seas_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -321,7 +321,7 @@ for(i in 1:reps){
   pred_seas <- predict(mod_seas_i, newdata = bio.matrix_val_i_seas, type = "response")
   
   RMSE_val_df$seas[i] = sqrt(mean((pred_seas[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$seas[i]  = sqrt(mean((log(pred_seas[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$seas[i]  = sqrt(mean((log10(pred_seas[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$seas[i]  = mean(abs(pred_seas[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
   
   # 2. Seas.trend ----
@@ -357,7 +357,7 @@ for(i in 1:reps){
   obs_fit_i = mod_seas.trend_i$fitted + mod_seas.trend_i$residuals
   
   RMSE_fit_df$seas.trend[i] = sqrt(mean((pred_seas.trend_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$seas.trend[i]  = sqrt(mean((log(pred_seas.trend_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$seas.trend[i]  = sqrt(mean((log10(pred_seas.trend_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$seas.trend[i]  = mean(abs(pred_seas.trend_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -374,7 +374,7 @@ for(i in 1:reps){
   pred_seas.trend <- predict(mod_seas.trend_i, newdata = bio.matrix_val_i_seas.trend, type = "response")
   
   RMSE_val_df$seas.trend[i] = sqrt(mean((pred_seas.trend[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$seas.trend[i]  = sqrt(mean((log(pred_seas.trend[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$seas.trend[i]  = sqrt(mean((log10(pred_seas.trend[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$seas.trend[i]  = mean(abs(pred_seas.trend[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
   
   # 3 Temp  ----
@@ -413,7 +413,7 @@ for(i in 1:reps){
   obs_fit_i = mod_T_i$fitted + mod_T_i$residuals
  
   RMSE_fit_df$Temp[i] = sqrt(mean((pred_T_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$Temp[i]  = sqrt(mean((log(pred_T_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$Temp[i]  = sqrt(mean((log10(pred_T_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$Temp[i]  = mean(abs(pred_T_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -433,7 +433,7 @@ for(i in 1:reps){
   pred_T<- predict(mod_T_i, newdata = bio.matrix_val_i_T, type = "response")
   
   RMSE_val_df$Temp[i] = sqrt(mean((pred_T[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$Temp[i]  = sqrt(mean((log(pred_T[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$Temp[i]  = sqrt(mean((log10(pred_T[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$Temp[i]  = mean(abs(pred_T[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
   
   # 4 T.seas  and year ----
@@ -459,7 +459,7 @@ for(i in 1:reps){
   obs_fit_i = mod_T.seas_i$fitted + mod_T.seas_i$residuals
   
   RMSE_fit_df$T.seas[i] = sqrt(mean((pred_T.seas_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$T.seas[i]  = sqrt(mean((log(pred_T.seas_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$T.seas[i]  = sqrt(mean((log10(pred_T.seas_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$T.seas[i]  = mean(abs(pred_T.seas_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -470,7 +470,7 @@ for(i in 1:reps){
   pred_T.seas<- predict(mod_T.seas_i, newdata = bio.matrix_val_i_T.seas, type = "response")
   
   RMSE_val_df$T.seas[i] = sqrt(mean((pred_T.seas[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$T.seas[i]  = sqrt(mean((log(pred_T.seas[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$T.seas[i]  = sqrt(mean((log10(pred_T.seas[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$T.seas[i]  = mean(abs(pred_T.seas[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
   
   # 5. T.P.seas and year ----
@@ -508,7 +508,7 @@ for(i in 1:reps){
   obs_fit_i = mod_T.P.seas_i$fitted + mod_T.P.seas_i$residuals
   
   RMSE_fit_df$T.P.seas[i] = sqrt(mean((pred_T.P.seas_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$T.P.seas[i]  = sqrt(mean((log(pred_T.P.seas_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$T.P.seas[i]  = sqrt(mean((log10(pred_T.P.seas_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$T.P.seas[i]  = mean(abs(pred_T.P.seas_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -528,7 +528,7 @@ for(i in 1:reps){
   pred_T.P.seas<- predict(mod_T.P.seas_i, newdata = bio.matrix_val_i_T.P.seas, type = "response")
   
   RMSE_val_df$T.P.seas[i] = sqrt(mean((pred_T.P.seas[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$T.P.seas[i]  = sqrt(mean((log(pred_T.P.seas[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$T.P.seas[i]  = sqrt(mean((log10(pred_T.P.seas[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$T.P.seas[i]  = mean(abs(pred_T.P.seas[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
 
   # 6. T.seas.trend ----
@@ -555,7 +555,7 @@ for(i in 1:reps){
   obs_fit_i = mod_T.seas.trend_i$fitted + mod_T.seas.trend_i$residuals
   
   RMSE_fit_df$T.seas.trend[i] = sqrt(mean((pred_mod_T.seas.trend_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$T.seas.trend[i]  = sqrt(mean((log(pred_mod_T.seas.trend_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$T.seas.trend[i]  = sqrt(mean((log10(pred_mod_T.seas.trend_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$T.seas.trend[i]  = mean(abs(pred_mod_T.seas.trend_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -566,7 +566,7 @@ for(i in 1:reps){
   pred_T.seas.trend <- predict(mod_T.seas.trend_i, newdata = bio.matrix_val_i_T.seas.trend, type = "response")
   
   RMSE_val_df$T.seas.trend[i] = sqrt(mean((pred_T.seas.trend[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$T.seas.trend[i]  = sqrt(mean((log(pred_T.seas.trend[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$T.seas.trend[i]  = sqrt(mean((log10(pred_T.seas.trend[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$T.seas.trend[i]  = mean(abs(pred_T.seas.trend[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
   
   # 7. T.P.seas.trend ----
@@ -592,7 +592,7 @@ for(i in 1:reps){
   obs_fit_i = mod_T.P.seas.trend_i$fitted + mod_T.P.seas.trend_i$residuals
   
   RMSE_fit_df$T.P.seas.trend[i] = sqrt(mean((pred_mod_T.P.seas.trend_i - obs_fit_i)^2, na.rm = T))
-  RMSLE_fit_df$T.P.seas.trend[i]  = sqrt(mean((log(pred_mod_T.P.seas.trend_i+1) - log(obs_fit_i+1))^2, na.rm = T))
+  RMSLE_fit_df$T.P.seas.trend[i]  = sqrt(mean((log10(pred_mod_T.P.seas.trend_i+1) - log10(obs_fit_i+1))^2, na.rm = T))
   MAE_fit_df$T.P.seas.trend[i]  = mean(abs(pred_mod_T.P.seas.trend_i - obs_fit_i), na.rm = T)
   
   ## assess model over validation sample ----
@@ -603,7 +603,7 @@ for(i in 1:reps){
   pred_T.P.seas.trend <- predict(mod_T.P.seas.trend_i, newdata = bio.matrix_val_i_T.P.seas.trend, type = "response")
   
   RMSE_val_df$T.P.seas.trend[i] = sqrt(mean((pred_T.P.seas.trend[-(obs_val_na)] - obs_val[-(obs_val_na)])^2, na.rm = T))
-  RMSLE_val_df$T.P.seas.trend[i]  = sqrt(mean((log(pred_T.P.seas.trend[-(obs_val_na)]+1) - log(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
+  RMSLE_val_df$T.P.seas.trend[i]  = sqrt(mean((log10(pred_T.P.seas.trend[-(obs_val_na)]+1) - log10(obs_val[-(obs_val_na)]+1))^2, na.rm = T))
   MAE_val_df$T.P.seas.trend[i]  = mean(abs(pred_T.P.seas.trend[-(obs_val_na)] - obs_val[-(obs_val_na)]), na.rm = T)
   
   
