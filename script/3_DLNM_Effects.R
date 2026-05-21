@@ -414,8 +414,8 @@ bio.matrix_test_regions %>%
   ) %>%
   dplyr::arrange(RMSLE)
 
-# Table 3: Per-region — temporal test set  
-table3 <- bio.matrix_test_years_known %>%
+# Table 4: Per-region — temporal test set  
+table4 <- bio.matrix_test_years_known %>%
   dplyr::mutate(pred = pred_years_known) %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
   dplyr::group_by(Region) %>%
@@ -428,11 +428,11 @@ table3 <- bio.matrix_test_years_known %>%
   ) %>%
   dplyr::arrange(RMSLE)
 
-write.csv(table3, "outputs/Table3_temporal_validation.csv", row.names = FALSE)
-print(table3)
+write.csv(table4, "outputs/table4_temporal_validation.csv", row.names = FALSE)
+print(table4)
 
-# Table 4: Per-region — spatial test set  
-table4 <- bio.matrix_test_regions %>%
+# Table 5: Per-region — spatial test set  
+table5 <- bio.matrix_test_regions %>%
   dplyr::mutate(pred = pred_regions) %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
   dplyr::group_by(Region, Country) %>%
@@ -445,8 +445,8 @@ table4 <- bio.matrix_test_regions %>%
   ) %>%
   dplyr::arrange(RMSLE)
 
-write.csv(table4, "outputs/Table4_spatial_validation.csv", row.names = FALSE)
-print(table4)
+write.csv(table5, "outputs/table5_spatial_validation.csv", row.names = FALSE)
+print(table5)
 
 ## 6.9 Visual check — example trap ----
 ID_check <- 3769 #4228
