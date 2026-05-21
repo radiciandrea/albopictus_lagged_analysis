@@ -418,15 +418,14 @@ bio.matrix_test_regions %>%
 table4 <- bio.matrix_test_years_known %>%
   dplyr::mutate(pred = pred_years_known) %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
-  dplyr::group_by(Region) %>%
+  dplyr::group_by(Region, Country) %>%
   dplyr::summarise(
     n_traps      = dplyr::n_distinct(ID),
     n_trap_weeks = dplyr::n(),
     Spearman_r    = round(cor(eggs, pred, method = "spearman"), 3),
-    RMSLE        = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 3),
-    .groups      = "drop"
+    RMSLE        = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 3)
   ) %>%
-  dplyr::arrange(RMSLE)
+  dplyr::arrange(-Spearman_r)
 
 write.csv(table4, "outputs/table4_temporal_validation.csv", row.names = FALSE)
 print(table4)
@@ -441,9 +440,8 @@ table5 <- bio.matrix_test_regions %>%
     n_trap_weeks = dplyr::n(),
     Spearman_r    = round(cor(eggs, pred, method = "spearman"), 3),
     RMSLE        = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 3),
-    .groups      = "drop"
   ) %>%
-  dplyr::arrange(RMSLE)
+  dplyr::arrange(-Spearman_r)
 
 write.csv(table5, "outputs/table5_spatial_validation.csv", row.names = FALSE)
 print(table5)
