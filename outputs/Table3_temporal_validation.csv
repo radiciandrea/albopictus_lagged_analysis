@@ -1,8 +1,0 @@
-"Region","n_traps","n_trap_weeks","Pearson_r","RMSLE"
-"Puglia",5,751,0.516,1.036
-"Emilia-Romagna",36,7669,0.73,1.037
-"Lazio",2,43,0.588,1.315
-"Ticino",8,1284,0.656,1.36
-"Autonomous Province of Trento",11,1566,0.685,1.593
-"Ostschweiz",10,226,0.053,2.078
-"Autonomous Province of Bolzano",17,2918,0.313,2.768

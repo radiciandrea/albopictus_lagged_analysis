@@ -1,0 +1,8 @@
+"Region","Country","n_traps","n_trap_weeks","Spearman_r","RMSLE"
+"Emilia-Romagna","Italy",36,7669,0.877,1.971
+"Ostschweiz","Switzerland",10,226,0.805,1.057
+"Puglia","Italy",5,751,0.748,1.46
+"Ticino","Switzerland",8,1284,0.742,1.168
+"Autonomous Province of Trento","Italy",11,1566,0.711,1.394
+"Autonomous Province of Bolzano","Italy",17,2918,0.701,1.369
+"Lazio","Italy",2,43,0.543,0.722

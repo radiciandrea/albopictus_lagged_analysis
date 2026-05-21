@@ -1,0 +1,29 @@
+"Set","Country","Region","Years","n_traps","n_traps_year","mean_pos_obs"
+"Calibration","Italy","Emilia-Romagna","2018, 2019, 2020, 2021, 2022, 2023",36,34.2,52.4
+"Calibration","Italy","Lazio","2018, 2019, 2020, 2021",42,25.5,40.1
+"Calibration","Italy","Autonomous Province of Bolzano","2019, 2020, 2021, 2022, 2023",17,17,39.1
+"Calibration","Italy","Autonomous Province of Trento","2018, 2019, 2020, 2021, 2022",14,12.4,50.1
+"Calibration","Italy","Veneto","2018, 2019, 2020, 2021, 2022",18,11,24.1
+"Calibration","Italy","Tuscany","2020, 2021, 2022",16,8.3,29.3
+"Calibration","Switzerland","Ostschweiz","2022, 2023",14,7,29.5
+"Calibration","Italy","Puglia","2020, 2021, 2022",5,5,23.2
+"Calibration","Switzerland","Ticino","2018, 2019, 2020, 2021, 2022, 2023",8,4.7,43.7
+"Test 1 (temporal)","Italy","Emilia-Romagna","2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2024",38,26.2,51.8
+"Test 1 (temporal)","Italy","Autonomous Province of Bolzano","2013, 2014, 2015, 2016, 2017, 2024",20,16.3,30.9
+"Test 1 (temporal)","Switzerland","Ostschweiz","2024",12,12,33
+"Test 1 (temporal)","Italy","Autonomous Province of Trento","2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017",12,7.6,36.7
+"Test 1 (temporal)","Italy","Puglia","2010, 2011, 2013, 2017",5,5,42.3
+"Test 1 (temporal)","Switzerland","Ticino","2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2024",13,5,32.2
+"Test 1 (temporal)","Italy","Lazio","2017",2,2,15.7
+"Test 2 (spatial)","Switzerland","Région lémanique","2022, 2023, 2024",10,6.7,33.5
+"Test 2 (spatial)","Switzerland","Nordwestschweiz","2019, 2020, 2022, 2023, 2024",9,3.6,34.8
+"Test 2 (spatial)","Albania","Vlore","2020, 2021",2,2,30
+"Test 2 (spatial)","Switzerland","Espace Mittelland","2020, 2022, 2024",3,1.7,13.2
+"Test 2 (spatial)","Albania","Tirane","2014, 2016, 2017, 2018, 2019, 2020, 2021, 2022",3,1.6,57.5
+"Test 2 (spatial)","France","Cote Azur","2014, 2015, 2016, 2017, 2018, 2019",1,1,47
+"Test 2 (spatial)","Albania","Fier","2020, 2021",1,1,42.1
+"Test 2 (spatial)","Albania","Lezhe","2021",1,1,37
+"Test 2 (spatial)","Albania","Lushnje","2020, 2021",1,1,39.3
+"Test 2 (spatial)","Italy","Sicily","2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2021, 2022",1,1,37.4
+"Test 2 (spatial)","Switzerland","Zentralschweiz","2023, 2024",2,1,21.7
+"Test 2 (spatial)","Switzerland","Zürich","2023, 2024",2,1,30.4
