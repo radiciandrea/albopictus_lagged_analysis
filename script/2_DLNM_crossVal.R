@@ -25,8 +25,8 @@ bio.matrix <- readRDS("data/localities_clim_weekly.rds") %>%
          tmean, precip) %>% 
   dplyr::rename(eggs=value, medianTweek= tmean, cumPrecweek=precip) %>% 
   dplyr::mutate(month=month(date), 
-         eggs=floor(eggs), 
-         year  = as.integer(year)) %>% 
+                eggs=floor(eggs), 
+                year  = as.integer(year)) %>% 
   as_tibble()
 
 # Summary stats for calibration window decision  
@@ -77,104 +77,6 @@ bio.matrix_cal <- bio.matrix %>%
     Region %in% calibration_regions_list,
     year   %in% 2018:2023
   )
-
-# Test set 1: held-out years from the same 9 regions (2010-2017 + 2024)
-bio.matrix_test_years <- bio.matrix  %>%
-  dplyr::mutate(year = as.integer(year)) %>%
-  dplyr::filter(
-    Region %in% calibration_regions_list,
-    !year  %in% 2018:2023
-  )
-
-# Test set 2: held-out regions entirely (all years)
-bio.matrix_test_regions <- bio.matrix  %>%
-  dplyr::mutate(year = as.integer(year)) %>%
-  dplyr::filter(!Region %in% calibration_regions_list)
-
-# Corrected sanity check
-cat("Calibration  — rows:", nrow(bio.matrix_cal),
-    "| traps:", dplyr::n_distinct(bio.matrix_cal$ID),
-    "| regions:", dplyr::n_distinct(bio.matrix_cal$Region), "\n")
-
-cat("Test years   — rows:", nrow(bio.matrix_test_years),
-    "| traps:", dplyr::n_distinct(bio.matrix_test_years$ID),
-    "| regions:", dplyr::n_distinct(bio.matrix_test_years$Region), "\n")  # <-- fixed
-
-cat("Test regions — rows:", nrow(bio.matrix_test_regions),
-    "| traps:", dplyr::n_distinct(bio.matrix_test_regions$ID),
-    "| regions:", dplyr::n_distinct(bio.matrix_test_regions$Region), "\n")
-
-# Overlap checks
-stopifnot(nrow(dplyr::intersect(
-  bio.matrix_cal %>% dplyr::select(ID, year, week),
-  bio.matrix_test_years %>% dplyr::select(ID, year, week))) == 0)
-
-stopifnot(nrow(dplyr::intersect(
-  bio.matrix_cal %>% dplyr::select(ID, year, week),
-  bio.matrix_test_regions %>% dplyr::select(ID, year, week))) == 0)
-
-# Find the actual overlapping rows
-overlap <- dplyr::intersect(
-  bio.matrix_cal %>% dplyr::select(ID, year, week),
-  bio.matrix_test_regions %>% dplyr::select(ID, year, week)
-)
-
-cat("Overlapping rows:", nrow(overlap), "\n")
-
-# Which IDs are causing it?
-overlap_ids <- unique(overlap$ID)
-cat("Overlapping IDs:", overlap_ids, "\n")
-
-# Check what regions these IDs appear in
-bio.matrix %>%
-  dplyr::filter(ID %in% overlap_ids) %>%
-  dplyr::distinct(ID, Region, Country) %>%
-  as.data.frame()
-
-bio.matrix  %>%
-  dplyr::filter(ID == 981) %>%
-  dplyr::distinct(ID, Region, Country, year) %>%
-  dplyr::arrange(year) %>%
-  as.data.frame()
-
-# DOUBLE CHECK THIS WITH MARGO, NOW WORKAROUND
-bio.matrix  <- bio.matrix  %>%
-  dplyr::mutate(Region = dplyr::if_else(ID == 981, "Nordwestschweiz", Region))
-
-#rebuild everything 
-bio.matrix_cal <- bio.matrix  %>%
-  dplyr::filter(Region %in% calibration_regions_list, year %in% 2018:2023)
-
-bio.matrix_test_years <- bio.matrix  %>%
-  dplyr::mutate(year = as.integer(year)) %>%
-  dplyr::filter(Region %in% calibration_regions_list, !year %in% 2018:2023)
-
-bio.matrix_test_regions <- bio.matrix  %>%
-  dplyr::mutate(year = as.integer(year)) %>%
-  dplyr::filter(!Region %in% calibration_regions_list)
-
-cat("Calibration  — rows:", nrow(bio.matrix_cal),
-    "| traps:", dplyr::n_distinct(bio.matrix_cal$ID),
-    "| regions:", dplyr::n_distinct(bio.matrix_cal$Region), "\n")
-
-cat("Test years   — rows:", nrow(bio.matrix_test_years),
-    "| traps:", dplyr::n_distinct(bio.matrix_test_years$ID),
-    "| regions:", dplyr::n_distinct(bio.matrix_test_years$Region), "\n")
-
-cat("Test regions — rows:", nrow(bio.matrix_test_regions),
-    "| traps:", dplyr::n_distinct(bio.matrix_test_regions$ID),
-    "| regions:", dplyr::n_distinct(bio.matrix_test_regions$Region), "\n")
-
-stopifnot(nrow(dplyr::intersect(
-  bio.matrix_cal %>% dplyr::select(ID, year, week),
-  bio.matrix_test_years %>% dplyr::select(ID, year, week))) == 0)
-
-stopifnot(nrow(dplyr::intersect(
-  bio.matrix_cal %>% dplyr::select(ID, year, week),
-  bio.matrix_test_regions %>% dplyr::select(ID, year, week))) == 0)
-
-cat("No overlap confirmed\n")
-
 
 ### add nweek and weekn
 bio.matrix_sel <- bio.matrix_cal%>%
@@ -907,12 +809,4 @@ cv_table %>%
   )) %>%
   as.data.frame()
 
-# EXPORT DATASETS
-saveRDS(bio.matrix_sel,          "data/bio.matrix_cal.rds")
-saveRDS(bio.matrix_test_years,   "data/bio.matrix_test_years.rds")
-saveRDS(bio.matrix_test_regions, "data/bio.matrix_test_regions.rds")
 
-cat("Exported:\n")
-cat("  Calibration : ", nrow(bio.matrix_sel),          "rows\n")
-cat("  Test years  : ", nrow(bio.matrix_test_years),   "rows\n")
-cat("  Test regions: ", nrow(bio.matrix_test_regions), "rows\n")
