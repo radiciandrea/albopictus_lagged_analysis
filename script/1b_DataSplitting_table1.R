@@ -177,8 +177,7 @@ stopifnot(nrow(dplyr::intersect(
 cat("No overlap confirmed\n")
 
 
-#### Table 1 ----
-
+#### Table 1a ----
 
 table1a1 <- bio.matrix_cal %>%
   dplyr::group_by(Region, year) %>%
@@ -187,7 +186,7 @@ table1a1 <- bio.matrix_cal %>%
   ) %>%
   dplyr::group_by(Region) %>%
   dplyr::summarise(
-    n_traps_year = mean(n_traps),
+    n_traps_year = round(mean(n_traps),1),
   ) %>% ungroup()
 
 table1a2 <- bio.matrix_cal %>%
@@ -200,7 +199,65 @@ table1a2 <- bio.matrix_cal %>%
   ) %>% ungroup() 
 
 table1a <- left_join(table1a1, table1a2) %>%
-  mutate(Role = "Calibration")
+  mutate(Set= "Calibration") %>%
+  select(c("Set", "Country", "Region", "Years", "n_traps", "n_traps_year", "mean_pos_obs")) %>%
+  arrange(-n_traps_year)
+
+#### Table 1b ----
+
+table1b1 <- bio.matrix_test_years %>%
+  dplyr::group_by(Region, year) %>%
+  dplyr::summarise(
+    n_traps      = dplyr::n_distinct(ID),
+  ) %>%
+  dplyr::group_by(Region) %>%
+  dplyr::summarise(
+    n_traps_year = round(mean(n_traps),1),
+  ) %>% ungroup()
+
+table1b2 <- bio.matrix_test_years %>%
+  dplyr::group_by(Region) %>%
+  dplyr::summarise(
+    Country = unique(Country),
+    Years = paste(sort(unique(year)), collapse = ", "),
+    n_traps      = dplyr::n_distinct(ID),
+    mean_pos_obs = round(100*sum(eggs > 1, na.rm = T)/sum(!is.na(eggs)), 1)
+  ) %>% ungroup() 
+
+table1b <- left_join(table1b1, table1b2) %>%
+  mutate(Set= "Test 1 (temporal)") %>%
+  select(c("Set", "Country", "Region", "Years", "n_traps", "n_traps_year", "mean_pos_obs")) %>%
+  arrange(-n_traps_year)
+
+#### Table 1c ----
+
+table1c1 <- bio.matrix_test_regions %>%
+  dplyr::group_by(Region, year) %>%
+  dplyr::summarise(
+    n_traps      = dplyr::n_distinct(ID),
+  ) %>%
+  dplyr::group_by(Region) %>%
+  dplyr::summarise(
+    n_traps_year = round(mean(n_traps),1),
+  ) %>% ungroup()
+
+table1c2 <- bio.matrix_test_regions %>%
+  dplyr::group_by(Region) %>%
+  dplyr::summarise(
+    Country = unique(Country),
+    Years = paste(sort(unique(year)), collapse = ", "),
+    n_traps      = dplyr::n_distinct(ID),
+    mean_pos_obs = round(100*sum(eggs > 1, na.rm = T)/sum(!is.na(eggs)), 1)
+  ) %>% ungroup() 
+
+table1c <- left_join(table1c1, table1c2) %>%
+  mutate(Set= "Test 2 (spatial)") %>%
+  select(c("Set", "Country", "Region", "Years", "n_traps", "n_traps_year", "mean_pos_obs")) %>%
+  arrange(-n_traps_year)
+
+# write table
+
+table1 = rbind(table1a, table1b, table1c)
 
 write.csv(table1, "outputs/Table1.csv", row.names = FALSE)
 print(table1)
