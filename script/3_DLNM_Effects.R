@@ -315,7 +315,7 @@ eval_metrics <- function(obs, pred, label) {
   cat("  RMSE:     ", round(sqrt(mean((obs - pred)^2)),                   3), "\n")
   cat("  MAE:      ", round(mean(abs(obs - pred)),                        3), "\n")
   cat("  RMSLE:    ", round(sqrt(mean((log(pred + 1) - log(obs + 1))^2)), 4), "\n")
-  cat("  Pearson r:", round(cor(obs, pred, method = "pearson"),           4), "\n\n")
+  cat("  Spearman's rank r:", round(cor(obs, pred, method = "spearman"),           4), "\n\n")
 }
 
 ## 6.4 Run predictions ----
@@ -352,7 +352,7 @@ per_trap_test_year <- bio.matrix_test_years_known %>%
   dplyr::group_by(ID, Region) %>%
   dplyr::summarise(
     n         = dplyr::n(),
-    Pearson_r = cor(eggs, pred, method = "pearson", use = "complete.obs"),
+    Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
     RMSLE     = sqrt(mean((log(pred + 1) - log(eggs + 1))^2)),
     .groups   = "drop"
   ) %>%
@@ -365,7 +365,7 @@ per_trap_test_regions <- bio.matrix_test_regions %>%
   dplyr::group_by(ID, Region) %>%
   dplyr::summarise(
     n         = dplyr::n(),
-    Pearson_r = cor(eggs, pred, method = "pearson", use = "complete.obs"),
+    Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
     RMSLE     = sqrt(mean((log(pred + 1) - log(eggs + 1))^2)),
     .groups   = "drop"
   ) %>%
@@ -373,16 +373,16 @@ per_trap_test_regions <- bio.matrix_test_regions %>%
   dplyr::mutate(test = "regions")
 
 per_trap_r <- rbind(per_trap_test_year, per_trap_test_regions) %>%
-  dplyr::arrange(desc(Pearson_r))
+  dplyr::arrange(desc(Spearman_r))
 
 
 cat("Per-trap validation summary:\n")
-cat("  Median Pearson r:", round(median(per_trap_r$Pearson_r, na.rm = TRUE), 3), "\n")
-cat("  IQR:             ", round(quantile(per_trap_r$Pearson_r, 0.25, na.rm = TRUE), 3),
-    "—", round(quantile(per_trap_r$Pearson_r, 0.75, na.rm = TRUE), 3), "\n")
+cat("  Median Spearman's rank r:", round(median(per_trap_r$Spearman_r, na.rm = TRUE), 3), "\n")
+cat("  IQR:             ", round(quantile(per_trap_r$Spearman_r, 0.25, na.rm = TRUE), 3),
+    "—", round(quantile(per_trap_r$Spearman_r, 0.75, na.rm = TRUE), 3), "\n")
 cat("  Median RMSLE:    ", round(median(per_trap_r$RMSLE, na.rm = TRUE), 3), "\n")
-cat("  Traps r > 0.5:   ", sum(per_trap_r$Pearson_r > 0.5, na.rm = TRUE),
-    "/", sum(!is.na(per_trap_r$Pearson_r)), "\n\n")
+cat("  Traps r > 0.5:   ", sum(per_trap_r$Spearman_r > 0.5, na.rm = TRUE),
+    "/", sum(!is.na(per_trap_r$Spearman_r)), "\n\n")
 
 
 ## 6.7 Per-region summary — test_years ----
@@ -393,7 +393,7 @@ bio.matrix_test_years_known %>%
   dplyr::summarise(
     n         = dplyr::n(),
     RMSLE     = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 4),
-    Pearson_r = round(cor(eggs, pred, method = "pearson"), 4),
+    Spearman_r = round(cor(eggs, pred, method = "spearman"), 4),
     .groups   = "drop"
   ) %>%
   dplyr::arrange(RMSLE) %>%
@@ -407,7 +407,7 @@ bio.matrix_test_regions %>%
   dplyr::summarise(
     n         = dplyr::n(),
     RMSLE     = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 4),
-    Pearson_r = round(cor(eggs, pred, method = "pearson"), 4),
+    Spearman_r = round(cor(eggs, pred, method = "spearman"), 4),
     .groups   = "drop"
   ) %>%
   dplyr::arrange(RMSLE) %>%
@@ -421,7 +421,7 @@ table3 <- bio.matrix_test_years_known %>%
   dplyr::summarise(
     n_traps      = dplyr::n_distinct(ID),
     n_trap_weeks = dplyr::n(),
-    Pearson_r    = round(cor(eggs, pred, method = "pearson"), 3),
+    Spearman_r    = round(cor(eggs, pred, method = "spearman"), 3),
     RMSLE        = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 3),
     .groups      = "drop"
   ) %>%
@@ -438,7 +438,7 @@ table4 <- bio.matrix_test_regions %>%
   dplyr::summarise(
     n_traps      = dplyr::n_distinct(ID),
     n_trap_weeks = dplyr::n(),
-    Pearson_r    = round(cor(eggs, pred, method = "pearson"), 3),
+    Spearman_r    = round(cor(eggs, pred, method = "spearman"), 3),
     RMSLE        = round(sqrt(mean((log(pred + 1) - log(eggs + 1))^2)), 3),
     .groups      = "drop"
   ) %>%
@@ -461,9 +461,9 @@ lines(check_df$date, check_df$pred, col = "darkgreen", lwd = 2)
 legend("topright", legend = c("Observed", "Predicted"),
        col = c("black", "darkgreen"), pch = c(16, NA), lty = c(NA, 1))
 
-cat("Pearson r ID", ID_check, ":",
+cat("Spearman r ID", ID_check, ":",
     round(cor(check_df$eggs, check_df$pred,
-              use = "complete.obs", method = "pearson"), 4), "\n")
+              use = "complete.obs", method = "spearman"), 4), "\n")
 
 
 ## 6.10 Visual check — spatial test set, best trap per region ----
@@ -472,28 +472,28 @@ cat("Pearson r ID", ID_check, ":",
 bio.matrix_test_regions_pred <- bio.matrix_test_regions %>%
   dplyr::mutate(pred = pred_regions)
 
-# Find best trap per region by Pearson r
+# Find best trap per region by Spearman r
 best_traps <- bio.matrix_test_regions_pred %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
   dplyr::group_by(Region, ID) %>%
   dplyr::summarise(
     n         = dplyr::n(),
-    Pearson_r = cor(eggs, pred, method = "pearson", use = "complete.obs"),
+    Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
     .groups   = "drop"
   ) %>%
   dplyr::filter(n >= 10) %>%
   dplyr::group_by(Region) %>%
-  dplyr::slice_max(Pearson_r, n = 1) %>%
+  dplyr::slice_max(Spearman_r, n = 1) %>%
   dplyr::ungroup()
 
 cat("Best trap per region:\n")
 print(as.data.frame(best_traps))
 
-# representative traps from spatial test set — low to high Pearson r
+# representative traps from spatial test set — low to high Spearman r
 selected_traps <- data.frame(
   Region    = c("Sicily", "Lezhe", "Fier", "Lushnje", "Cote Azur", "Région lémanique"),
   ID        = c(22983,    14499,   17040,  16578,     9987,        4208),
-  Pearson_r = c(0.36,     0.48,    0.58,   0.69,      0.78,        0.96)
+  Spearman_r = c(0.36,     0.48,    0.58,   0.69,      0.78,        0.96)
 )
 
 cat("Selected traps:\n")
@@ -509,7 +509,7 @@ for (i in seq_len(nrow(selected_traps))) {
   
   id_check  <- selected_traps$ID[i]
   reg       <- selected_traps$Region[i]
-  r_val     <- selected_traps$Pearson_r[i]
+  r_val     <- selected_traps$Spearman_r[i]
   
   df <- bio.matrix_test_regions_pred %>%
     dplyr::filter(ID == id_check, !is.na(eggs))
