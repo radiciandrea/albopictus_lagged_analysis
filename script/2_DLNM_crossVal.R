@@ -528,7 +528,7 @@ for(i in 1:reps){
   ResDev_df$T.seas.trend[i] = summary(mod_T.seas.trend_i)$deviance
   ResDev_df$T.P.seas.trend[i] = summary(mod_T.P.seas.trend_i)$deviance
 }
-toc() # roughly 4 min to run 
+toc() # roughly 4 to 9 min to run 
 
 # Plots ----
 # fitting vs + validation, different metrics
@@ -756,7 +756,8 @@ ggarrange(p_ResDev + scale_y_continuous(trans='log10'),
 
 # Summary stats from cross-validation results ----
 # Add ResDev and Dispersion to the summary ----
-library(dplyr)
+
+
 cv_summary_full <- bind_rows(
   RMSE_fit_ldf   %>% dplyr::rename(value = RMSE)       %>% mutate(metric = "RMSE"),
   RMSE_val_ldf   %>% dplyr::rename(value = RMSE)       %>% mutate(metric = "RMSE"),
@@ -772,13 +773,13 @@ cv_summary_full <- bind_rows(
 cv_table <- cv_summary_full %>%
   dplyr::group_by(metric, dataset, model) %>%
   dplyr::summarise(
-    median = round(median(value, na.rm = TRUE), 3),
-    Q25    = round(quantile(value, 0.25, na.rm = TRUE), 3),
-    Q75    = round(quantile(value, 0.75, na.rm = TRUE), 3),
+    median = signif(median(value, na.rm = TRUE), 3), # to have only 3 signifciative numbers across the indicators
+    Q25    = signif(quantile(value, 0.25, na.rm = TRUE), 3),
+    Q75    = signif(quantile(value, 0.75, na.rm = TRUE), 3),
     .groups = "drop"
   ) %>%
   dplyr::mutate(
-    median_IQR = paste0(median, " (", Q25, "–", Q75, ")")
+    median_IQR = paste0(median, " (", Q25, "-", Q75, ")")
   ) %>%
   dplyr::select(metric, dataset, model, median_IQR) %>%
   tidyr::pivot_wider(names_from = model, values_from = median_IQR) %>%
@@ -791,15 +792,19 @@ cv_table
 # Separate main table (validation metrics only) from supplementary (fitting diagnostics)
 
 # Main table: validation metrics
-cv_table %>%
+cv_table3 <- cv_table %>%
   dplyr::filter(metric %in% c("RMSE", "RMSLE", "MAE"),
                 dataset == "Validation") %>%
   dplyr::select(-dataset) %>%
   dplyr::arrange(factor(metric, levels = c("RMSLE", "RMSE", "MAE"))) %>%
   as.data.frame()
 
+# write csv
+write.csv(cv_table3, "outputs/Table3.csv", row.names = FALSE)
+print(cv_table3)
+
 # Supplementary table: fitting diagnostics
-cv_table %>%
+cv_tableSI3 <- cv_table %>%
   dplyr::filter(metric %in% c("RMSLE", "ResDev", "Dispersion"),
                 dataset == "Fitting") %>%
   dplyr::select(-dataset) %>%
@@ -808,5 +813,9 @@ cv_table %>%
     "", ""
   )) %>%
   as.data.frame()
+
+# write csv
+write.csv(cv_tableSI3, "outputs/TableSI3.csv", row.names = FALSE)
+print(cv_table1)
 
 
