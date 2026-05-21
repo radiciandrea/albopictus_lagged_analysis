@@ -345,8 +345,8 @@ eval_metrics(
 eval_metrics(bio.matrix_test_regions$eggs, pred_regions,
              "Test set 2 — held-out regions")
 
-## 6.6 Per-trap evaluation — test_years ----
-per_trap_r <- bio.matrix_test_years_known %>%
+## 6.6 Per-trap evaluation  ----
+per_trap_test_year <- bio.matrix_test_years_known %>%
   dplyr::mutate(pred = pred_years_known) %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
   dplyr::group_by(ID, Region) %>%
@@ -357,7 +357,24 @@ per_trap_r <- bio.matrix_test_years_known %>%
     .groups   = "drop"
   ) %>%
   dplyr::filter(n >= 10) %>%
+  dplyr::mutate(test = "years")
+
+per_trap_test_regions <- bio.matrix_test_regions %>%
+  dplyr::mutate(pred = pred_regions) %>%
+  dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
+  dplyr::group_by(ID, Region) %>%
+  dplyr::summarise(
+    n         = dplyr::n(),
+    Pearson_r = cor(eggs, pred, method = "pearson", use = "complete.obs"),
+    RMSLE     = sqrt(mean((log(pred + 1) - log(eggs + 1))^2)),
+    .groups   = "drop"
+  ) %>%
+  dplyr::filter(n >= 10) %>%
+  dplyr::mutate(test = "regions")
+
+per_trap_r <- rbind(per_trap_test_year, per_trap_test_regions) %>%
   dplyr::arrange(desc(Pearson_r))
+
 
 cat("Per-trap validation summary:\n")
 cat("  Median Pearson r:", round(median(per_trap_r$Pearson_r, na.rm = TRUE), 3), "\n")
@@ -367,19 +384,8 @@ cat("  Median RMSLE:    ", round(median(per_trap_r$RMSLE, na.rm = TRUE), 3), "\n
 cat("  Traps r > 0.5:   ", sum(per_trap_r$Pearson_r > 0.5, na.rm = TRUE),
     "/", sum(!is.na(per_trap_r$Pearson_r)), "\n\n")
 
-## 6.7 Per-region summary — test_years ----
-per_trap_r %>%
-  dplyr::group_by(Region) %>%
-  dplyr::summarise(
-    n_traps      = dplyr::n(),
-    median_r     = round(median(Pearson_r, na.rm = TRUE), 3),
-    median_RMSLE = round(median(RMSLE,     na.rm = TRUE), 3),
-    .groups      = "drop"
-  ) %>%
-  dplyr::arrange(desc(median_r)) %>%
-  as.data.frame()
 
-#forse è giusto questo? da verificare
+## 6.7 Per-region summary — test_years ----
 bio.matrix_test_years_known %>%
   dplyr::mutate(pred = pred_years_known) %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
