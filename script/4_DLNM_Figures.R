@@ -20,7 +20,7 @@ for (j in seq_along(lags)) {
        xlab = "Temperature (°C)", ylab = "IRR",
        col = cols[j], lwd = 2,
        main = paste0("Lag = ", lags[j], " weeks"),
-       ylim = c(0, 3))
+       ylim = c(0, 2))
   abline(h = 1, col = "grey40", lwd = 1, lty = 2)
   abline(v = 15, col = "grey40", lwd = 1, lty = 2)
 }
@@ -33,7 +33,7 @@ plot(cptmean, "contour",
      xlab = "Temperature (°C)", ylab = "Lag (weeks)",
      xlim = c(6, 30),                              # explicit xlim so abline lands correctly
      main = "C — Lag-response surface")
-abline(v = 15, col = "black", lwd = 2, lty = 2)
+abline(v = 15 - 2.25, col = "black", lwd = 2, lty = 2) # corrected by and
 dev.off()
 
 # Precipitation effects
@@ -57,7 +57,7 @@ for (j in seq_along(lags)) {
        xlab = "Precipitation (mm)", ylab = "IRR",
        col = cols[j], lwd = 2,
        main = paste0("Lag = ", lags[j], " weeks"),
-       ylim = c(0, 2))
+       ylim = c(0.5, 1.5))
   abline(h = 1, col = "grey40", lwd = 1, lty = 2)
 }
 par(mfrow = c(1, 1))
@@ -69,5 +69,5 @@ plot(cppmean, "contour",
      xlab = "Precipitation (mm)", ylab = "Lag (weeks)",
      xlim = c(0, ceiling(P_max)),                  # explicit xlim so abline lands correctly
      main = "C — Lag-response surface")
-abline(v = 0, col = "black", lwd = 2, lty = 2)
+abline(v = 0-1.8, col = "black", lwd = 2, lty = 2) # aggiustato a mano
 dev.off()
