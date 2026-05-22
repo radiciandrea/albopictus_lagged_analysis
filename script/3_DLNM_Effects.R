@@ -97,7 +97,14 @@ cat("  Deviance explained:           ", round(
 
 # 4. Temperature effects ----
 myCen_T <- 15
-cptmean <- crosspred(cbTemp, mod_T.P.seas, cen = myCen_T, by = 1, at = 6:30)
+
+step = 0.1
+temp_vec = seq(6, 30, step)
+cptmean <- crosspred(cbTemp, mod_T.P.seas, cen = myCen_T, by = step, at = t_vec)
+
+# max of the curve
+max(cptmean$allRRfit)
+temp_vec[which(cptmean$allRRfit == max(cptmean$allRRfit))]
 
 # Overall cumulative effect
 png("outputs/temp_overall.png", width = 800, height = 600, res = 120)
@@ -139,7 +146,7 @@ P_max   <- unname(quantile(bio.matrix_sel$cumPrecweek, 0.95, na.rm = TRUE))
 cat("Precipitation Q95:", P_max, "mm\n")
 
 cppmean <- crosspred(cbPrec, mod_T.P.seas,
-                     cen = myCen_P, by = 1, at = 0:ceiling(P_max))
+                     cen = myCen_P, by = step, at = seq(0, ceiling(P_max), step))
 
 # Overall cumulative effect
 png("outputs/precip_overall.png", width = 800, height = 600, res = 120)
@@ -372,7 +379,7 @@ per_trap_test_regions <- bio.matrix_test_regions %>%
   dplyr::filter(n >= 10) %>%
   dplyr::mutate(test = "regions")
 
-per_trap_r <- rbind(per_trap_test_year, per_trap_test_regions) %>%
+per_trap_r <- per_trap_test_regions %>% #rbind(per_trap_test_year, per_trap_test_regions) %>%
   dplyr::arrange(desc(Spearman_r))
 
 
