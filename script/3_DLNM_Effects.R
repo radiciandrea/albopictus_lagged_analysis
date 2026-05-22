@@ -100,7 +100,7 @@ myCen_T <- 15
 
 step = 0.1
 temp_vec = seq(6, 30, step)
-cptmean <- crosspred(cbTemp, mod_T.P.seas, cen = myCen_T, by = step, at = t_vec)
+cptmean <- crosspred(cbTemp, mod_T.P.seas, cen = myCen_T, by = step, at = temp_vec)
 
 # max of the curve
 max(cptmean$allRRfit)
@@ -145,8 +145,14 @@ myCen_P <- 0
 P_max   <- unname(quantile(bio.matrix_sel$cumPrecweek, 0.95, na.rm = TRUE))
 cat("Precipitation Q95:", P_max, "mm\n")
 
+step = 0.1
+prec_vec = seq(0, ceiling(P_max), step)
+
 cppmean <- crosspred(cbPrec, mod_T.P.seas,
-                     cen = myCen_P, by = step, at = seq(0, ceiling(P_max), step))
+                     cen = myCen_P, by = step, at = prec_vec)
+# intersection 0
+id_prec = which(abs(cppmean$allRRfit-1)< 0.001)[2] # the first os trivially 0
+prec_vec[id_prec]
 
 # Overall cumulative effect
 png("outputs/precip_overall.png", width = 800, height = 600, res = 120)
