@@ -355,21 +355,29 @@ eval_metrics(
   "Test set 1b — forward validation 2024"
 )
 
-eval_metrics(bio.matrix_test_regions$eggs, pred_regions,
+eval_metrics(
+  bio.matrix_test_years_known$eggs,
+  pred_years_known,
+  "Test set 1 "
+)
+
+eval_metrics(bio.matrix_test_regions$eggs,
+             pred_regions,
              "Test set 2 — held-out regions")
 
 ## 6.6 Per-trap evaluation  ----
-per_trap_test_year <- bio.matrix_test_years_known %>%
+per_trap_test_years <- bio.matrix_test_years_known %>%
   dplyr::mutate(pred = pred_years_known) %>%
   dplyr::filter(!is.na(eggs), is.finite(pred)) %>%
   dplyr::group_by(ID, Region) %>%
   dplyr::summarise(
     n         = dplyr::n(),
     Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
+    p_value_Sr    = round((cor.test(eggs, pred, method = "spearman"))$p.value,4),
     RMSLE     = sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)),
     .groups   = "drop"
   ) %>%
-  dplyr::filter(n >= 10) %>%
+  # dplyr::filter(n >= 10) %>%
   dplyr::mutate(test = "years")
 
 per_trap_test_regions <- bio.matrix_test_regions %>%
@@ -379,13 +387,14 @@ per_trap_test_regions <- bio.matrix_test_regions %>%
   dplyr::summarise(
     n         = dplyr::n(),
     Spearman_r = cor(eggs, pred, method = "spearman", use = "complete.obs"),
+    p_value_Sr    = round((cor.test(eggs, pred, method = "spearman"))$p.value,4),
     RMSLE     = sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)),
     .groups   = "drop"
   ) %>%
-  dplyr::filter(n >= 10) %>%
+  # dplyr::filter(n >= 10) %>%
   dplyr::mutate(test = "regions")
 
-per_trap_r <- per_trap_test_regions %>% #rbind(per_trap_test_year, per_trap_test_regions) %>%
+per_trap_r <- per_trap_test_years %>% #rbind(per_trap_test_year, per_trap_test_regions) %>%
   dplyr::arrange(desc(Spearman_r))
 
 
@@ -396,7 +405,8 @@ cat("  IQR:             ", round(quantile(per_trap_r$Spearman_r, 0.25, na.rm = T
 cat("  Median RMSLE:    ", round(median(per_trap_r$RMSLE, na.rm = TRUE), 3), "\n")
 cat("  Traps r > 0.5:   ", sum(per_trap_r$Spearman_r > 0.5, na.rm = TRUE),
     "/", sum(!is.na(per_trap_r$Spearman_r)), "\n\n")
-
+cat("  Significative traps (0.001):   ", sum(per_trap_r$p_value_Sr < 0.001, na.rm = TRUE),
+    "/", sum(!is.na(per_trap_r$Spearman_r)), "\n\n")
 
 ## 6.7 Per-region summary — test_years ----
 bio.matrix_test_years_known %>%
