@@ -5,11 +5,11 @@ library(ggplot2)
 
 # Load objects ----
 bio.matrix_sel               <- readRDS("data/bio.matrix_cal.rds") %>%
-  select(c("ID", "year", "week", "medianTweek", "eggs"))
+  select(c("ID", "year", "week", "medianTweek", "cumPrecweek", "eggs"))
 bio.matrix_test_regions_pred <- readRDS("data/bio.matrix_test_regions_pred.rds") %>%
-  select(c("ID", "year", "week", "medianTweek", "eggs"))
+  select(c("ID", "year", "week", "medianTweek", "cumPrecweek", "eggs"))
 bio.matrix_test_years        <- readRDS("data/bio.matrix_test_years.rds") %>%
-  select(c("ID", "year", "week", "medianTweek", "eggs"))
+  select(c("ID", "year", "week", "medianTweek", "cumPrecweek", "eggs"))
 
 # there are duplicates in bio.matrix_test_regions_pred (ID 981, y 2019)
 bio.matrix_test_regions_pred <- bio.matrix_test_regions_pred %>%
@@ -69,3 +69,36 @@ observed_predicted_cross[r,]
 plot(bio.matrix %>% filter(year == observed_predicted_cross$year[r],
                                ID == observed_predicted_cross$ID[r]) %>% pull(eggs))
 
+
+
+# with precipitation ----
+
+predicted_cross_sel <- bio.matrix  %>%
+  group_by(ID) %>% #group_by(ID, year) %>%
+  summarise(threshold_rain = week[which(cumPrecweek > 12)[1]]) %>%
+  filter(!is.na(threshold_rain)) %>%
+  ungroup()
+
+observed_predicted_cross = left_join(observed_cross_sel, predicted_cross_sel, by = c("ID")) %>%
+  filter(!is.na(threshold_rain))
+
+#plot e corr
+
+cor_result <- cor.test(observed_predicted_cross$threshold_eggs,
+                       observed_predicted_cross$threshold_rain,
+                       method = "pearson")
+
+# significativa e negativa, pensa te
+
+cat("Pearson r (onset vs threshold crossing):", round(cor_result$estimate, 3), "\n")
+cat("p-value:                                ", format(cor_result$p.value, scientific = TRUE), "\n")
+
+ggplot(observed_predicted_cross,
+       aes(x = threshold_rain, y = threshold_eggs)) +
+  geom_point(alpha = 0.2, size = 1, col = "orange") + #
+  geom_smooth(method = "lm", col = "firebrick", linewidth = 1) +
+  labs(x     = "Week of 17.5°C threshold crossing",
+       y     = "Observed season onset (week)",
+       title = "rain threshold vs observed season onset") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank())
