@@ -106,6 +106,9 @@ cptmean <- crosspred(cbTemp, mod_T.P.seas, cen = myCen_T, by = step, at = temp_v
 max(cptmean$allRRfit)
 temp_vec[which(cptmean$allRRfit == max(cptmean$allRRfit))]
 
+# doubling temperature - tolerance of 0.02
+temp_vec[which(abs(cptmean$allRRfit - 2) < 0.02)][1]
+
 # Overall cumulative effect
 png("outputs/temp_overall.png", width = 800, height = 600, res = 120)
 plot(cptmean, ptype = "overall",
