@@ -420,7 +420,7 @@ bio.matrix_test_years_known %>%
     RMSLE     = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 4),
     .groups   = "drop"
   ) %>%
-  dplyr::arrange(RMSLE) %>%
+  dplyr::arrange(-Spearman_r) %>%
   as.data.frame()
 
 ##6.8 Per-region breakdown — test_regions ----
@@ -435,7 +435,7 @@ bio.matrix_test_regions %>%
     RMSLE     = round(sqrt(mean((log10(pred + 1) - log(eggs + 1))^2)), 4),
     .groups   = "drop"
   ) %>%
-  dplyr::arrange(RMSLE)
+  dplyr::arrange(-Spearman_r)
 
 # Table 4: Per-region — temporal test set  
 table4 <- bio.matrix_test_years_known %>%
