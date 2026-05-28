@@ -778,7 +778,7 @@ ggsave("outputs/Figure4_seasonality.png",
 # 8. Save objects for additional analyses ----
 
 # Add predictions to test_years
-bio.matrix_test_regions_pred <- bio.matrix_test_years_known %>%
+bio.matrix_test_years_pred <- bio.matrix_test_years_known %>%
   dplyr::mutate(pred = pred_years_known)
 
 # Add predictions to test_regions
@@ -787,7 +787,7 @@ bio.matrix_sel_pred <- bio.matrix_sel %>%
 
 saveRDS(bio.matrix_test_regions_pred, "data/bio.matrix_test_regions_pred.rds")
 saveRDS(bio.matrix_test_years_pred, "data/bio.matrix_test_years_pred.rds")
-saveRDS(bio.matrix_test_sel_pred, "data/bio.matrix_test_sel_pred.rds")
+saveRDS(bio.matrix_sel_pred, "data/bio.matrix_sel_pred.rds")
 saveRDS(selected_traps,               "data/selected_traps.rds")
 saveRDS(env.matrix,                   "data/env.matrix_pred.rds")
 saveRDS(seas.av.df,                   "data/seas.av.df.rds")
