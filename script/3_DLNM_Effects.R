@@ -25,6 +25,7 @@ library(tidyterra)
 library(ggplot2)
 library(patchwork)
 library(RColorBrewer)
+library(gcplyr)
 
 # 1. Load data ----
 bio.matrix_sel <- readRDS("data/bio.matrix_cal.rds")
@@ -108,6 +109,12 @@ temp_vec[which(cptmean$allRRfit == max(cptmean$allRRfit))]
 
 # doubling temperature - tolerance of 0.02
 temp_vec[which(abs(cptmean$allRRfit - 2) < 0.02)][1]
+
+# derivative of the curve
+allRRfit_deriv = calc_deriv(y = cptmean$allRRfit, x = temp_vec)
+
+# and find the maximum (which is the temperature at the infelction point)
+temp_vec[which(allRRfit_deriv == max(allRRfit_deriv, na.rm = T))]
 
 # Overall cumulative effect
 png("outputs/temp_overall.png", width = 800, height = 600, res = 120)
