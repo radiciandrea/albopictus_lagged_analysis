@@ -352,6 +352,11 @@ pred_regions <- predict_with_intercept(
   tknots, pknots, trap_intercepts_df, avg_intercept
 )
 
+pred_cal <- predict_with_intercept(
+  bio.matrix_sel, mod_T.P.seas,
+  tknots, pknots, trap_intercepts_df, avg_intercept
+)
+
 ## 6.5 Pooled evaluation ----
 eval_metrics(
   bio.matrix_test_years_known$eggs[bio.matrix_test_years_known$year %in% 2010:2017],
@@ -771,7 +776,18 @@ ggsave("outputs/Figure4_seasonality.png",
 
 
 # 8. Save objects for additional analyses ----
+
+# Add predictions to test_years
+bio.matrix_test_regions_pred <- bio.matrix_test_years_known %>%
+  dplyr::mutate(pred = pred_years_known)
+
+# Add predictions to test_regions
+bio.matrix_sel_pred <- bio.matrix_sel %>%
+  dplyr::mutate(pred = pred_cal)
+
 saveRDS(bio.matrix_test_regions_pred, "data/bio.matrix_test_regions_pred.rds")
+saveRDS(bio.matrix_test_years_pred, "data/bio.matrix_test_years_pred.rds")
+saveRDS(bio.matrix_test_sel_pred, "data/bio.matrix_test_sel_pred.rds")
 saveRDS(selected_traps,               "data/selected_traps.rds")
 saveRDS(env.matrix,                   "data/env.matrix_pred.rds")
 saveRDS(seas.av.df,                   "data/seas.av.df.rds")
