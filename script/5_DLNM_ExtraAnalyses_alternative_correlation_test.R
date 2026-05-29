@@ -108,7 +108,7 @@ ggplot(observed_predicted_cross,
   geom_smooth(method = "lm", col = "firebrick", linewidth = 1) +
   labs(x     = "Predicted season onset (week)",
        y     = "Observed season onset (week)",
-       title = "predicted vs observed season onset") +
+       title = "Predicted (full model) vs observed season onset") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank())
 
