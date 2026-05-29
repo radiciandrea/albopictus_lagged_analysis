@@ -65,12 +65,13 @@ p1 <- ggplot(observed_thermal_onset_df,
   geom_smooth(method = "lm", col = "firebrick", linewidth = 1) +
   labs(x     = "Week of 17.5°C threshold crossing",
        y     = "Observed season onset (week)",
-       title = "Thermal threshold vs observed season onset") +
+       title = "a) Thermal threshold vs observed onset") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank()) + 
-  annotate("text", x = 34, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
+  annotate("text", x = 33, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
                                                   round(cor_result_thermal_onset$estimate, 3),
-                                                  "\nMAE: ", format(mae_thermal_onset, digits = 3)))
+                                                  "\nMAE: ", format(mae_thermal_onset, digits = 3)))+ 
+  theme(text=element_text(family="sans"))
 
 p1
 
@@ -103,14 +104,15 @@ p2 <- ggplot(observed_modelled_onset_df,
              aes(x = model_onset, y = threshold_eggs)) +
   geom_point(alpha = 0.2, size = 1, col = "orange") + #
   geom_smooth(method = "lm", col = "firebrick", linewidth = 1) +
-  labs(x     = "Week of 17.5°C threshold crossing",
+  labs(x     = "T.P.seas.year-predicted onset (week)",
        y     = "Observed season onset (week)",
-       title = "Full-model predicted season onset (week)") +
+       title = "b) Full-model predicted vs observed onset") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank()) + 
-  annotate("text", x = 34, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
+  annotate("text", x = 33, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
                                                              round(cor_result_modelled_onset$estimate, 3),
-                                                             "\nMAE: ", format(mae_modelled_onset, digits = 3)))
+                                                             "\nMAE: ", format(mae_modelled_onset, digits = 3)))+ 
+  theme(text=element_text(family="sans"))
 
 p1+p2
 
@@ -161,12 +163,13 @@ p3 <- ggplot(observed_thermal_offset_df,
   geom_smooth(method = "lm", col = "firebrick", linewidth = 1) +
   labs(x     = "Week of 17.5°C threshold crossing",
        y     = "Observed season offset (week)",
-       title = "Thermal threshold vs observed season offset") +
+       title = "c) Thermal threshold vs observed offset") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank()) + 
-  annotate("text", x = 34, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
+  annotate("text", x = 33, y = 45, hjust = 0, label = paste0("Pearson's r: ", 
                                                              round(cor_result_thermal_offset$estimate, 3),
-                                                             "\nMAE: ", format(mae_thermal_offset, digits = 3)))
+                                                             "\nMAE: ", format(mae_thermal_offset, digits = 3)))+ 
+  theme(text=element_text(family="sans"))
 
 p3
 
@@ -200,18 +203,24 @@ p4 <- ggplot(observed_modelled_offset_df,
              aes(x = model_offset, y = threshold_eggs)) +
   geom_point(alpha = 0.2, size = 1, col = "steelblue") + #
   geom_smooth(method = "lm", col = "firebrick", linewidth = 1) +
-  labs(x     = "Week of 17.5°C threshold crossing",
+  labs(x     = "T.P.seas.year-predicted offeset (week)",
        y     = "Observed season offset (week)",
-       title = "Full-model predicted season offset (week)") +
+       title = "d) Full-model predicted vs observed offset") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank()) + 
-  annotate("text", x = 34, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
+  annotate("text", x = 33, y = 45, hjust = 0, label = paste0("Pearson's r: ", 
                                                              round(cor_result_modelled_offset$estimate, 3),
-                                                             "\nMAE: ", format(mae_modelled_offset, digits = 3)))
+                                                             "\nMAE: ", format(mae_modelled_offset, digits = 3)))+ 
+  theme(text=element_text(family="sans"))
 
-p3+p4
+fig_4 = p1 + p2 + p3 + p4 
 
 
+ggsave("outputs/Figure4.png",
+       fig_4,
+       width  = 9.5,
+       height = 8,
+       dpi    = 300)
 
 
 
