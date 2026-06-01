@@ -120,7 +120,7 @@ temp_vec[which(allRRfit_deriv == max(allRRfit_deriv, na.rm = T))]
 png("outputs/temp_overall.png", width = 800, height = 600, res = 120)
 plot(cptmean, ptype = "overall",
      xlab = "Temperature (°C)", ylab = "IRR",
-     col  = 2, main = "Temperature — overall cumulative effect")
+     col  = 2, main = "a ) Temperature — overall cumulative effect")
 dev.off()
 
 # Lag profiles at fixed temperatures
