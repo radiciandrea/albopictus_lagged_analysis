@@ -117,33 +117,33 @@ allRRfit_deriv = calc_deriv(y = cptmean$allRRfit, x = temp_vec)
 temp_vec[which(allRRfit_deriv == max(allRRfit_deriv, na.rm = T))]
 
 # Overall cumulative effect
-png("outputs/temp_overall.png", width = 800, height = 600, res = 120)
+# png("outputs/temp_overall.png", width = 800, height = 600, res = 120)
 plot(cptmean, ptype = "overall",
      xlab = "Temperature (°C)", ylab = "IRR",
      col  = 2, main = "a ) Temperature — overall cumulative effect")
-dev.off()
+# dev.off()
 
 # Lag profiles at fixed temperatures
-png("outputs/temp_lag_profiles.png", width = 900, height = 800, res = 120)
-layout(matrix(1:4, ncol = 2, nrow = 2))
-for (tmp in c(6, 14, 22, 30)) {
-  plot(cptmean, var = tmp,
-       xlab = "Lag (weeks)", ylab = "IRR", col = 2,
-       main = paste("T =", tmp, "°C"), ylim = c(0, 3))
-}
-layout(1)
-dev.off()
+# png("outputs/temp_lag_profiles.png", width = 900, height = 800, res = 120)
+# layout(matrix(1:4, ncol = 2, nrow = 2))
+# for (tmp in c(6, 14, 22, 30)) {
+#   plot(cptmean, var = tmp,
+#        xlab = "Lag (weeks)", ylab = "IRR", col = 2,
+#        main = paste("T =", tmp, "°C"), ylim = c(0, 3))
+# }
+# layout(1)
+# dev.off()
 
 # Exposure-response at fixed lags
-png("outputs/temp_exposure_response.png", width = 900, height = 800, res = 120)
-layout(matrix(1:4, ncol = 2, nrow = 2))
-for (lg in c(0, 2, 4, 8)) {
-  plot(cptmean, lag = lg,
-       xlab = "Temperature (°C)", ylab = "IRR", col = 2,
-       main = paste("Lag =", lg, "weeks"), ylim = c(0, 3))
-}
-layout(1)
-dev.off()
+# png("outputs/temp_exposure_response.png", width = 900, height = 800, res = 120)
+# layout(matrix(1:4, ncol = 2, nrow = 2))
+# for (lg in c(0, 2, 4, 8)) {
+#   plot(cptmean, lag = lg,
+#        xlab = "Temperature (°C)", ylab = "IRR", col = 2,
+#        main = paste("Lag =", lg, "weeks"), ylim = c(0, 3))
+# }
+# layout(1)
+# dev.off()
 
 plot(cptmean, ptype = "3d",
      xlab = "Temperature (°C)", ylab = "Lag (weeks)", zlab = "IRR",
@@ -165,34 +165,34 @@ id_prec = which(abs(cppmean$allRRfit-1)< 0.001)[2] # the first os trivially 0
 prec_vec[id_prec]
 
 # Overall cumulative effect
-png("outputs/precip_overall.png", width = 800, height = 600, res = 120)
+# png("outputs/precip_overall.png", width = 800, height = 600, res = 120)
 plot(cppmean, ptype = "overall",
      xlab = "Precipitation (mm)", ylab = "IRR",
      col  = 2, main = "Precipitation — overall cumulative effect",
      ylim = c(0.5, 3))
-dev.off()
+# dev.off()
 
 # Lag profiles at fixed precipitation values
-png("outputs/precip_lag_profiles.png", width = 900, height = 800, res = 120)
-layout(matrix(1:4, ncol = 2, nrow = 2))
-for (prc in c(5, 10, 20, 50)) {
-  plot(cppmean, var = prc,
-       xlab = "Lag (weeks)", ylab = "IRR", col = 2,
-       main = paste("Precip =", prc, "mm"), ylim = c(0.75, 1.25))
-}
-layout(1)
-dev.off()
+# png("outputs/precip_lag_profiles.png", width = 900, height = 800, res = 120)
+# layout(matrix(1:4, ncol = 2, nrow = 2))
+# for (prc in c(5, 10, 20, 50)) {
+#   plot(cppmean, var = prc,
+#        xlab = "Lag (weeks)", ylab = "IRR", col = 2,
+#        main = paste("Precip =", prc, "mm"), ylim = c(0.75, 1.25))
+# }
+# layout(1)
+# dev.off()
 
 # Exposure-response at fixed lags
-png("outputs/precip_exposure_response.png", width = 900, height = 800, res = 120)
-layout(matrix(1:4, ncol = 2, nrow = 2))
-for (lg in c(0, 2, 4, 8)) {
-  plot(cppmean, lag = lg,
-       xlab = "Precipitation (mm)", ylab = "IRR", col = 2,
-       main = paste("Lag =", lg, "weeks"), ylim = c(0, 2))
-}
-layout(1)
-dev.off()
+# png("outputs/precip_exposure_response.png", width = 900, height = 800, res = 120)
+# layout(matrix(1:4, ncol = 2, nrow = 2))
+# for (lg in c(0, 2, 4, 8)) {
+#   plot(cppmean, lag = lg,
+#        xlab = "Precipitation (mm)", ylab = "IRR", col = 2,
+#        main = paste("Lag =", lg, "weeks"), ylim = c(0, 2))
+# }
+# layout(1)
+# dev.off()
 
 plot(cppmean, ptype = "3d",
      xlab = "Precipitation (mm)", ylab = "Lag (weeks)", zlab = "IRR",
