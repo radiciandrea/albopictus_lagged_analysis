@@ -70,7 +70,8 @@ p1 <- ggplot(observed_thermal_onset_df,
   theme(panel.grid.minor = element_blank()) + 
   annotate("text", x = 33, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
                                                   round(cor_result_thermal_onset$estimate, 3),
-                                                  "\nMAE: ", format(mae_thermal_onset, digits = 3)))+ 
+                                                  "\nMAE: ", format(mae_thermal_onset, digits = 3),
+                                                  "\nRMSE: ", format(rmse_thermal_onset, digits = 3)))+ 
   theme(text=element_text(family="sans"))
 
 p1
@@ -111,7 +112,8 @@ p2 <- ggplot(observed_modelled_onset_df,
   theme(panel.grid.minor = element_blank()) + 
   annotate("text", x = 33, y = 18, hjust = 1, label = paste0("Pearson's r: ", 
                                                              round(cor_result_modelled_onset$estimate, 3),
-                                                             "\nMAE: ", format(mae_modelled_onset, digits = 3)))+ 
+                                                             "\nMAE: ", format(mae_modelled_onset, digits = 3),
+                                                             "\nRMSE: ", format(rmse_modelled_onset, digits = 3)))+ 
   theme(text=element_text(family="sans"))
 
 p1+p2
@@ -168,7 +170,8 @@ p3 <- ggplot(observed_thermal_offset_df,
   theme(panel.grid.minor = element_blank()) + 
   annotate("text", x = 33, y = 45, hjust = 0, label = paste0("Pearson's r: ", 
                                                              round(cor_result_thermal_offset$estimate, 3),
-                                                             "\nMAE: ", format(mae_thermal_offset, digits = 3)))+ 
+                                                             "\nMAE: ", format(mae_thermal_offset, digits = 3),
+                                                             "\nRMSE: ", format(rmse_thermal_offset, digits = 3)))+ 
   theme(text=element_text(family="sans"))
 
 p3
@@ -210,7 +213,8 @@ p4 <- ggplot(observed_modelled_offset_df,
   theme(panel.grid.minor = element_blank()) + 
   annotate("text", x = 33, y = 45, hjust = 0, label = paste0("Pearson's r: ", 
                                                              round(cor_result_modelled_offset$estimate, 3),
-                                                             "\nMAE: ", format(mae_modelled_offset, digits = 3)))+ 
+                                                             "\nMAE: ", format(mae_modelled_offset, digits = 3),
+                                                             "\nRMSE: ", format(rmse_modelled_offset, digits = 3)))+ 
   theme(text=element_text(family="sans"))
 
 fig_4 = p1 + p2 + p3 + p4 
