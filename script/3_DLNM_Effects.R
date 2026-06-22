@@ -50,16 +50,14 @@ tknots <- unname(quantile(bio.matrix_sel$medianTweek,
 
 cbTemp <- crossbasis(bio.matrix_sel$medianTweek, lag = tlag,
                      argvar = list(fun = "bs", degree = 2, knots = tknots),
-                     arglag = list(knots = c(1, 4)),
-                     group  = bio.matrix_sel$Region)
+                     arglag = list(knots = c(1, 4)))
 
 pknots <- unname(quantile(bio.matrix_sel$cumPrecweek,
                           probs = c(0.25, 0.75, 0.9), na.rm = TRUE))
 
 cbPrec <- crossbasis(bio.matrix_sel$cumPrecweek, lag = tlag,
                      argvar = list(fun = "bs", degree = 2, knots = pknots),
-                     arglag = list(knots = c(1, 4)),
-                     group  = bio.matrix_sel$Region)
+                     arglag = list(knots = c(1, 4)))
 
 cat("tknots:", tknots, "\n")
 cat("pknots:", pknots, "\n")
