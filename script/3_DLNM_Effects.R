@@ -150,8 +150,8 @@ plot(cptmean, ptype = "3d",
 
 # 5. Precipitation effects ----
 myCen_P <- 0
-P_max   <- unname(quantile(bio.matrix_sel$cumPrecweek, 0.95, na.rm = TRUE))
-cat("Precipitation Q95:", P_max, "mm\n")
+P_max   <- 60 #unname(quantile(bio.matrix_sel$cumPrecweek, 0.90, na.rm = TRUE))
+cat("Precipitation max:", P_max, "mm\n")
 
 step = 0.1
 prec_vec = seq(0, ceiling(P_max), step)
