@@ -42,7 +42,7 @@ for (j in seq_along(lags)) {
   abline(h = 1, col = "grey40", lwd = 1, lty = 2)
   abline(v = 15, col = "grey40", lwd = 1, lty = 2)
 }
-title("B - Effect of average temperature at different lags", outer = TRUE, line = -1.5,
+title("B — Effect of average temperature at different lags", outer = TRUE, line = -1.5,
       xlab = "Average temperature (°C)", ylab = "IRR")
 # par(mfrow = c(1, 1))
 dev.off()
@@ -93,7 +93,7 @@ for (j in seq_along(lags)) {
   
   abline(h = 1, col = "grey40", lwd = 1, lty = 2)
 }
-title("E - Effect of cumulative rainfall at different lags", outer = TRUE, line = -1.5,
+title("E — Effect of cumulative rainfall at different lags", outer = TRUE, line = -1.5,
       xlab = "Cumulative rainfall (mm)", ylab = "IRR")
 # par(mfrow = c(1, 1))
 dev.off()
