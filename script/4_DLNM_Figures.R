@@ -10,7 +10,8 @@ png("outputs/Fig2A_temp_overall.png", width = width_set, height = height_set, re
 # par(mar = c(5, 5, 4, 2))
 plot(cptmean, ptype = "overall",
      xlab = "Average temperature (°C)", ylab = "IRR",
-     col = "darkgreen", lwd = 2,
+     col = "darkorange", lwd = 2,
+     ci.arg = list(col = adjustcolor("darkorange", alpha.f = 0.1)),
      main = "A — Overall cumulative effect of temperature")
 abline(h = 1, col = "grey40", lwd = 1, lty = 2)
 dev.off()
@@ -20,19 +21,29 @@ par(mfrow = c(2, 2), mar = c(4.5, 4, 2.5, 1))
 
 # layout(mat = matrix(c(1, 2, 3, 4), ncol = 2, byrow = T))
 # par(mfrow = c(2, 2))
-cols <- c("darkgreen", "darkgreen", "darkgreen", "darkgreen") #c("steelblue", "darkgreen", "firebrick", "darkorange")
+cols <- c("darkorange", "darkorange", "darkorange", "darkorange") #c("steelblue", "darkgreen", "firebrick", "darkorange")
 lags <- c(0, 2, 4, 8)
 for (j in seq_along(lags)) {
+  
+  if(j < 2.5) {
+    par(mar = c(1.5, 3.5, 3, 0))
+  } else {
+    par(mar = c(3.5, 3.5, 1, 0))
+  }
+  
   plot(cptmean, lag = lags[j],
-       xlab = "Average temperature (°C)", ylab = "IRR",
+       #xlab = "Average temperature (°C)", ylab = "IRR",
+       xlab = "", ylab = "",
        col = cols[j], lwd = 2,
+       ci.arg = list(col = adjustcolor("darkorange", alpha.f = 0.1)),
        ylim = c(0, 2))
   text(x = 6, y = 1.8, label = paste0("Lag = ", lags[j], "\nweeks"), cex = 1, adj = 0)
   
   abline(h = 1, col = "grey40", lwd = 1, lty = 2)
   abline(v = 15, col = "grey40", lwd = 1, lty = 2)
 }
-title("B - Effect of average temperature at different lags", outer = TRUE, line = -1.5)
+title("B - Effect of average temperature at different lags", outer = TRUE, line = -1.5,
+      xlab = "Average temperature (°C)", ylab = "IRR")
 # par(mfrow = c(1, 1))
 dev.off()
 
@@ -52,6 +63,7 @@ png("outputs/Fig2D_precip_overall.png", width = width_set, height = height_set, 
 plot(cppmean, ptype = "overall",
      xlab = "Cumulative rainfall (mm)", ylab = "IRR",
      col = "darkgreen", lwd = 2,
+     ci.arg = list(col = adjustcolor("darkgreen", alpha.f = 0.1)),
      main = "D — Overall cumulative effect of rainfall",
      ylim = c(0.5, 3))
 abline(h = 1, col = "grey40", lwd = 1, lty = 2)   # dashed at IRR = 1
@@ -62,17 +74,27 @@ par(mfrow = c(2, 2), mar = c(4.5, 4, 2.5, 1))
 # par(mfrow = c(2, 2))
 cols <- c("darkgreen", "darkgreen", "darkgreen", "darkgreen") #c("steelblue", "darkgreen", "firebrick", "darkorange")
 lags <- c(0, 2, 4, 8)
-lags <- c(0, 2, 4, 8)
+
 for (j in seq_along(lags)) {
+  
+  if(j < 2.5) {
+    par(mar = c(1.5, 3.5, 3, 0))
+  } else {
+    par(mar = c(3.5, 3.5, 1, 0))
+  }
+  
   plot(cppmean, lag = lags[j],
-       xlab = "Cumulative rainfall (mm)", ylab = "IRR",
+       #xlab = "Cumulative rainfall (mm)", ylab = "IRR",
+       xlab = "", ylab = "",
        col = cols[j], lwd = 2,
+       ci.arg = list(col = adjustcolor("darkgreen", alpha.f = 0.1)),
        ylim = c(0.5, 1.5))
   text(x = 2, y = 1.4, label = paste0("Lag = ", lags[j], " weeks"), cex = 1, adj = 0)
   
   abline(h = 1, col = "grey40", lwd = 1, lty = 2)
 }
-title("E - Effect of cumulative rainfall at different lags", outer = TRUE, line = -1.5)
+title("E - Effect of cumulative rainfall at different lags", outer = TRUE, line = -1.5,
+      xlab = "Cumulative rainfall (mm)", ylab = "IRR")
 # par(mfrow = c(1, 1))
 dev.off()
 
