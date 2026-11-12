@@ -1,4 +1,4 @@
-setwd("/home/dared/GitHub/albopictus_lagged_analysis/")
+setwd("/home/ddare/GitHub/albopictus_lagged_analysis/")
 library(terra)
 library(tidyverse)
 library(lubridate)
@@ -64,7 +64,7 @@ extract_climate <- function(rast_obj, layer_ref, varnames, localities_df, loc_ve
 
  
 # 1. LOAD OBSERVATIONS ----
-localities <- readRDS("data/aggregated_albopictus_observations_2026-03-23.RDS")
+localities <- readRDS("data/aggregated_albopictus_observations_2026-07-13.RDS")
 
 unique_locs <- localities %>%
   ungroup() %>%
@@ -129,33 +129,49 @@ loc_vect <- vect(unique_locs,
 mapview(st_as_sf(loc_vect))
 
 # 2. LOAD RASTERS ----
-indir <- "/home/dared/Documents/PoD/marieCurie2022/ZanZemap/ML/Download_Process_ClimData/2025/data/weekly/"
+indir <- "/home/ddare/Documents/PoD/marieCurie2022/ZanZemap/ML/Download_Process_ClimData/2025/data/weekly/"
 
-tas <- rast(paste0(indir, "t2m_weekly_stats_201001-202512_C.nc"))
+# only the weekly mean temperature is read from the netCDF
+tas <- rast(paste0(indir, "t2m_weekly_stats_201001-202512_C.nc"), subds = "t2m_mean")
 tp  <- rast(paste0(indir, "tp_weekly_cumulative_201001-202512.nc"))
 
-# ── Coastal gap filling ───────────────────────────────────────────────────────
-# 5×5 focal mean applied only to NA cells (coastal/border locations)
+# Coastal gap filling
+# 5x5 focal mean applied only to NA cells (coastal/border locations)
 # pad = TRUE ensures edge cells are handled correctly
 w   <- matrix(1, 5, 5)
 tas <- focal(tas, w, fun = mean, na.rm = TRUE, na.policy = "only", pad = TRUE)
 tp  <- focal(tp,  w, fun = mean, na.rm = TRUE, na.policy = "only", pad = TRUE)
 
-cat("tas layers:", nlyr(tas), "\n")
-cat("tp  layers:", nlyr(tp),  "\n")
+cat("tas layers:", nlyr(tas), "\n")   # expect 835
+cat("tp  layers:", nlyr(tp),  "\n")   # expect 835
 
 # 3. BUILD LAYER REFERENCES ----
-tas_vars <- c(tmean = "t2m_mean", tmin = "t2m_min", tmax = "t2m_max")
-tp_vars  <- c(precip = "tp")
+tp_vars <- c(precip = "tp")
 
-layer_ref_tas <- build_layer_ref(tas, tas_vars, years = obs_years)
-layer_ref_tp  <- build_layer_ref(tp,  tp_vars,  years = obs_years)
+layer_ref_tas <- tibble(
+  date        = as_date(time(tas)),
+  layer_tmean = seq_len(nlyr(tas))
+) %>%
+  mutate(year = isoyear(date),
+         week = isoweek(date)) %>%
+  filter(year %in% obs_years, week %in% 1:53)
+
+layer_ref_tp <- tibble(
+  date         = as_date(time(tp)),
+  layer_precip = seq_len(nlyr(tp))
+) %>%
+  mutate(year = isoyear(date),
+         week = isoweek(date)) %>%
+  filter(year %in% obs_years, week %in% 1:53)
 
 cat("tas layer ref rows:", nrow(layer_ref_tas), "\n")
 cat("tp  layer ref rows:", nrow(layer_ref_tp),  "\n")
+cat("Year-weeks differing between tas and tp:",
+    nrow(anti_join(layer_ref_tas, layer_ref_tp, by = c("year", "week"))) +
+      nrow(anti_join(layer_ref_tp, layer_ref_tas, by = c("year", "week"))), "\n")   # expect 0
 
 # 4. EXTRACT ----
-clim_temp   <- extract_climate(tas, layer_ref_tas, names(tas_vars),
+clim_temp   <- extract_climate(tas, layer_ref_tas, "tmean",
                                unique_locs, loc_vect, id_col = "ID")
 
 clim_precip <- extract_climate(tp,  layer_ref_tp,  names(tp_vars),
@@ -165,7 +181,7 @@ clim <- left_join(clim_temp, clim_precip,
                   by = c("ID", "year", "week", "date"))
 
 cat("Climate rows:", nrow(clim), "\n")
-# Expect: nrow(unique_locs) * nrow(layer_ref_tas)
+# Expect: nrow(unique_locs) * nrow(layer_ref_tas) = 216 * 782 = 168,912
 
 # 5. JOIN CLIMATE BACK TO FULL OBSERVATIONS -----
 localities_clim <- localities %>%
@@ -177,12 +193,12 @@ localities_clim <- localities %>%
   ) %>%
   select(-year_int, -week_int)
 
-cat("Final rows:", nrow(localities_clim), "\n")   # must be 59,734
+cat("Final rows:", nrow(localities_clim), "\n")   
 cat("Final cols:", ncol(localities_clim), "\n")
 
 # 6. SANITY CHECKS ----
 localities_clim %>%
-  summarise(across(c(tmean, tmin, tmax, precip), ~ sum(is.na(.))))
+  summarise(across(c(tmean, precip), ~ sum(is.na(.))))
 
 localities_clim %>%
   ggplot(aes(x = as.integer(week), y = tmean, col = year)) +
@@ -193,8 +209,8 @@ localities_clim %>%
 
 localities_clim %>%
   ggplot(aes(x = as.integer(week), y = precip, col = year)) +
-  geom_bar(alpha = 0.3, stat="identity") +
-  facet_grid( year ~ Region) +
+  geom_bar(alpha = 0.3, stat = "identity") +
+  facet_grid(year ~ Region) +
   labs(title = "Weekly cumulative precipitation by region", y = "Cumulative precipitation (mm)") +
   theme_minimal()
 

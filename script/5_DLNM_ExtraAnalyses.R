@@ -83,7 +83,7 @@ pt <- ggplot(onset_vs_threshold,
        title = "Thermal threshold vs predicted season onset") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank())
-
+pt
 ggsave( "outputs/Fig_threshold_vs_onset.png", pt,  width = 7, height = 6, dpi = 300)
 
 # 3. Interannual variability in season length ----
@@ -146,7 +146,7 @@ precip_threshold <- precip_threshold %>%
        title = "Precipitation threshold during active oviposition season") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank())
-
+precip_threshold
 ggsave("outputs/Fig_precip_threshold_by_region.png",precip_threshold,  width = 8, height = 5, dpi = 300)
 
 

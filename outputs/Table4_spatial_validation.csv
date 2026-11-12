@@ -1,13 +1,15 @@
-"Region","Country","n_traps","n_trap_weeks","Pearson_r","RMSLE"
-"Lushnje","Albania",1,48,0.694,1.438
-"Région lémanique","Switzerland",10,408,0.504,1.513
-"Zentralschweiz","Switzerland",2,28,0.484,1.54
-"Tirane","Albania",3,496,0.52,1.558
-"Lezhe","Albania",1,19,0.479,1.582
-"Espace Mittelland","Switzerland",3,79,0.708,1.672
-"Nordwestschweiz","Switzerland",9,473,0.618,1.821
-"Cote Azur","France",1,248,0.78,1.932
-"Zürich","Switzerland",2,38,0.572,2.04
-"Fier","Albania",1,68,0.583,2.299
-"Sicily","Italy",1,356,0.358,2.386
-"Vlore","Albania",2,132,0.468,2.731
+"Region","Country","n_traps","n_trap_weeks","Pearson_r","RMSLE","Spearman_rho"
+"Zentralschweiz","CH",2,28,0.453,0.892,0.78
+"Région lémanique","CH",10,408,0.492,1.049,0.83
+"Veri","AL",1,19,0.48,1.052,0.7
+"Espace Mittelland","CH",2,64,0.835,1.178,0.63
+"Ostschweiz","CH",10,314,0.465,1.181,0.83
+"Nordwestschweiz","CH",4,131,0.768,1.314,0.86
+"Qender","AL",3,496,0.521,1.322,0.83
+"Freiburg","DE",4,215,0.735,1.362,0.86
+"Provence-Alpes-Côte d’Azur","FR",1,248,0.782,1.384,0.89
+"Alsace","FR",2,62,0.752,1.41,0.86
+"Zürich","CH",2,38,0.557,1.516,0.82
+"Liechtenstein","LI",1,26,0.324,1.541,0.68
+"Jug","AL",4,264,0.535,1.85,0.71
+"Sicilia","IT",1,356,0.356,1.918,0.6
